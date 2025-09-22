@@ -8,13 +8,64 @@
   </head>
   <body>
     <main class="container">
-      <h1>Welcome to the Vercel Demo</h1>
-      <p>This is a minimal static page served by an npm project.</p>
+      <header class="hero">
+        <h1>Welcome to the Vercel Demo</h1>
+        <p>
+          Explore how a lightweight static site can talk to serverless functions and
+          guide you toward launch-ready projects.
+        </p>
+      </header>
+
       <section class="card" id="api-card">
-        <h2>Serverless API response</h2>
-        <p id="api-message">Loading…</p>
+        <div class="card-header">
+          <h2>Serverless API response</h2>
+          <button class="button subtle" id="refresh-btn" type="button">Refresh</button>
+        </div>
+        <p class="lead" id="api-message" role="status">Loading…</p>
         <p class="timestamp" id="api-timestamp"></p>
       </section>
+
+      <section class="card" id="personalize-card">
+        <h2>Personalize the greeting</h2>
+        <p>
+          Use the latest API message as a starting point and tailor it to your team or
+          project.
+        </p>
+        <form class="form" id="personalize-form">
+          <label class="form-field" for="name-input">Your name or team</label>
+          <div class="form-controls">
+            <input
+              id="name-input"
+              name="name"
+              type="text"
+              placeholder="e.g. Static Site Ninjas"
+              autocomplete="off"
+            />
+            <button class="button primary" type="submit">Preview message</button>
+          </div>
+        </form>
+        <p class="preview" id="personalized-output">
+          Enter a name to craft a friendly greeting.
+        </p>
+      </section>
+
+      <div class="grid">
+        <section class="card" id="checklist-card">
+          <h2>Launch checklist</h2>
+          <p>Tick the boxes as you get your deployment ready.</p>
+          <ul class="checklist" id="checklist"></ul>
+          <div class="progress">
+            <div class="progress-bar" id="progress-bar"></div>
+          </div>
+          <p class="progress-label" id="progress-label" role="status"></p>
+        </section>
+
+        <section class="card" id="tip-card">
+          <h2>Quick tip</h2>
+          <p id="tip-message">Loading tip…</p>
+          <button class="button subtle" id="tip-button" type="button">Show another tip</button>
+        </section>
+      </div>
     </main>
     <footer>
       <p>Deployed with <a href="https://vercel.com" target="_blank" rel="noreferrer">Vercel</a>.</p>
