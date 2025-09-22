@@ -1,44 +1,49 @@
-# Vercel Demo Web App
+# Launch Code Lab
 
-This repository contains a tiny example of an npm-powered web application that can be deployed to [Vercel](https://vercel.com). It exposes a static landing page backed by a single serverless API route.
+This repository contains a tiny browser game that can be deployed to [Vercel](https://vercel.com)
+with zero build tooling. The page runs a "guess the number" challenge entirely on the client and
+stores your best scores in `localStorage`.
+
+## Features
+
+- Generates a secret "launch code" between 1 and 100 and guides you with high/low hints.
+- Tracks attempts for each round and records the best run, most recent run, and total wins in
+  `localStorage`.
+- Works without any build step or external dependencies—open `index.html` directly or serve it from a
+  static host.
 
 ## Project structure
 
 ```
 .
-├── api/hello.js      # Serverless function returning JSON
-├── app.js            # Front-end script fetching data from the API route
+├── api/hello.js      # Example serverless function (unused by the game but kept for reference)
+├── app.js            # Game logic, state management, and localStorage helpers
 ├── dev-server.js     # Lightweight local development server (no external deps)
-├── index.html        # Static landing page
+├── index.html        # Static game interface
 ├── package.json      # npm metadata and scripts
-├── styles.css        # Styling for the landing page
+├── styles.css        # Styling for the Launch Code Lab theme
 └── vercel.json       # Minimal Vercel configuration
 ```
 
-## Getting started locally
+## Playing locally
 
-This project does not rely on any third-party npm packages, so there is nothing to install. To experiment locally, make sure you have Node.js 18 or newer and run:
+The project ships without runtime dependencies. To explore it locally, make sure you have Node.js 18 or
+newer and run:
 
 ```bash
-npm install          # Optional: creates a lockfile, no packages are downloaded
+npm install          # Optional: keeps the lockfile in sync
 npm run dev          # Starts the lightweight dev server on http://localhost:3000
 ```
 
-Open <http://localhost:3000> in your browser. The page will call the `/api/hello` endpoint which, in this local mode, is handled directly by the dev server.
+Then open <http://localhost:3000> in your browser. Every round is stored in `localStorage`, so refreshing
+the page will keep your mission records intact.
 
 ## Deploying to Vercel
 
 1. Push this repository to your own GitHub (or GitLab/Bitbucket) account.
 2. Create a new project in the Vercel dashboard and import the repository.
-3. Vercel detects the `index.html` file and serves it as a static asset. The `api/hello.js` file becomes a serverless function available at `/api/hello`.
-4. Once the deployment completes, visit the generated URL to see the page and JSON API in action.
+3. Vercel detects the `index.html` file and serves it as a static asset. The optional `api/hello.js`
+   file remains available as a serverless function at `/api/hello` if you want to expand the game later.
+4. Once the deployment completes, visit the generated URL to play from anywhere.
 
-> **Tip:** The optional `vercel.json` file rewrites the root path (`/`) to `index.html`, ensuring the static file is served even when the project also contains API routes.
-
-## Customization ideas
-
-- Update the `api/hello.js` function to read data from an external service.
-- Replace the static HTML page with a client-side framework of your choice.
-- Extend `dev-server.js` to watch files and reload automatically during development.
-
-Have fun experimenting with Vercel deployments! ✨
+Have fun cracking the launch code! 🚀
