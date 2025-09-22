@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Vercel NPM Web App Demo</title>
+    <title>Launch Code Lab</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -20,84 +20,106 @@
     </div>
 
     <main class="container">
-      <nav class="top-nav" aria-label="Primary">
+      <nav class="top-nav" aria-label="Game navigation">
         <div class="brand">
           <span class="brand-mark" aria-hidden="true">▲</span>
-          <span class="brand-text">Launch Studio</span>
+          <span class="brand-text">Launch Code Lab</span>
         </div>
         <span class="status-pill">
           <span class="status-dot" aria-hidden="true"></span>
-          Ready to deploy
+          Best run: <span id="best-pill-value">—</span>
         </span>
       </nav>
 
       <header class="hero card hero-card">
-        <p class="eyebrow">Experience preview</p>
-        <h1><span class="gradient-text">Welcome to the Vercel Demo</span></h1>
+        <p class="eyebrow">Mini mission</p>
+        <h1><span class="gradient-text">Guess the Launch Code</span></h1>
         <p>
-          Explore how a lightweight static site can speak to serverless functions while
-          guiding your team toward a polished, launch-ready experience.
+          Test your deduction skills by uncovering the secret number hidden between 1
+          and 100. Each guess narrows the launch window and your best run is saved in
+          the browser using localStorage.
         </p>
         <div class="hero-badges" role="list">
-          <span class="hero-badge" role="listitem">Serverless ready</span>
-          <span class="hero-badge" role="listitem">Instant previews</span>
-          <span class="hero-badge" role="listitem">Collaborative launchpad</span>
+          <span class="hero-badge" role="listitem">Browser only</span>
+          <span class="hero-badge" role="listitem">Local save</span>
+          <span class="hero-badge" role="listitem">Instant play</span>
         </div>
       </header>
 
-      <section class="card" id="api-card">
-        <div class="card-header">
-          <h2>Serverless API response</h2>
-          <button class="button subtle" id="refresh-btn" type="button">Refresh</button>
-        </div>
-        <p class="lead" id="api-message" role="status">Loading…</p>
-        <p class="timestamp" id="api-timestamp"></p>
-      </section>
-
-      <section class="card" id="personalize-card">
-        <h2>Personalize the greeting</h2>
-        <p>
-          Use the latest API message as a starting point and tailor it to your team or
-          project.
-        </p>
-        <form class="form" id="personalize-form">
-          <label class="form-field" for="name-input">Your name or team</label>
-          <div class="form-controls">
-            <input
-              id="name-input"
-              name="name"
-              type="text"
-              placeholder="e.g. Static Site Ninjas"
-              autocomplete="off"
-            />
-            <button class="button primary" type="submit">Preview message</button>
-          </div>
-        </form>
-        <p class="preview" id="personalized-output">
-          Enter a name to craft a friendly greeting.
-        </p>
-      </section>
-
       <div class="grid">
-        <section class="card" id="checklist-card">
-          <h2>Launch checklist</h2>
-          <p>Tick the boxes as you get your deployment ready.</p>
-          <ul class="checklist" id="checklist"></ul>
-          <div class="progress">
-            <div class="progress-bar" id="progress-bar"></div>
+        <section class="card game-card" id="game-card">
+          <div class="card-header">
+            <h2>Crack the launch code</h2>
+            <button class="button subtle" id="new-game-btn" type="button">New game</button>
           </div>
-          <p class="progress-label" id="progress-label" role="status"></p>
+          <p>
+            A random number between 1 and 100 has been secured. Use logic to close in on
+            the answer. We'll let you know when you're high, low, or right on target.
+          </p>
+          <p class="range-display" id="range-display" role="status" aria-live="polite">
+            Launch window: 1 – 100.
+          </p>
+          <p class="game-status" id="status-message" role="status" aria-live="polite">
+            Tap "New game" to begin your investigation.
+          </p>
+          <form class="form" id="guess-form" novalidate>
+            <label class="form-field" for="guess-input">Enter your guess</label>
+            <div class="form-controls">
+              <input
+                id="guess-input"
+                name="guess"
+                type="number"
+                min="1"
+                max="100"
+                inputmode="numeric"
+                autocomplete="off"
+                placeholder="e.g. 42"
+                required
+              />
+              <button class="button primary" id="guess-button" type="submit">Submit guess</button>
+            </div>
+          </form>
+          <div class="history">
+            <div class="history-header">
+              <h3>Telemetry</h3>
+              <span class="attempt-count" id="attempt-count">0 attempts</span>
+            </div>
+            <p class="history-empty" id="history-empty">Your guesses will appear here.</p>
+            <ol class="history-list" id="guess-history" aria-live="polite" aria-label="Guess history"></ol>
+          </div>
         </section>
 
-        <section class="card" id="tip-card">
-          <h2>Quick tip</h2>
-          <p id="tip-message">Loading tip…</p>
-          <button class="button subtle" id="tip-button" type="button">Show another tip</button>
+        <section class="card stats-card" id="stats-card">
+          <h2>Mission records</h2>
+          <p>Progress is stored locally so you can pick up right where you left off.</p>
+          <dl class="stats-grid">
+            <div class="stat">
+              <dt>Best score</dt>
+              <dd id="best-score-value">—</dd>
+            </div>
+            <div class="stat">
+              <dt>Games completed</dt>
+              <dd id="games-played-value">0</dd>
+            </div>
+            <div class="stat">
+              <dt>Last run</dt>
+              <dd id="last-score-value">—</dd>
+            </div>
+          </dl>
+          <button class="button subtle" id="reset-stats-btn" type="button">Reset records</button>
+          <div class="tips">
+            <h3>Tips for success</h3>
+            <ul class="tip-list">
+              <li>Start in the middle of the range to eliminate the most options.</li>
+              <li>Keep track of the updated launch window after every guess.</li>
+              <li>Beat your best score by solving the code in as few attempts as possible.</li>
+            </ul>
+          </div>
         </section>
       </div>
     </main>
     <footer>
-      <p>Deployed with <a href="https://vercel.com" target="_blank" rel="noreferrer">Vercel</a>.</p>
+      <p>Built with vanilla JavaScript and localStorage. Deploy anywhere in seconds.</p>
     </footer>
     <script src="app.js" defer></script>
   </body>

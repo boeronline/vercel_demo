@@ -1,228 +1,309 @@
-let latestGreeting = null;
-let isFetchingGreeting = false;
+const STORAGE_KEY = 'launch-code-stats';
+const DEFAULT_RANGE = { min: 1, max: 100 };
 
-function updatePersonalizedPreview() {
-  const input = document.getElementById('name-input');
-  const output = document.getElementById('personalized-output');
+let secretNumber = null;
+let attempts = 0;
+let currentRange = { ...DEFAULT_RANGE };
+let gameActive = false;
+let stats = null;
 
-  if (!input || !output) {
-    return;
-  }
-
-  const value = input.value.trim();
-  if (value.length === 0) {
-    output.textContent = 'Enter a name to craft a friendly greeting.';
-    return;
-  }
-
-  const baseMessage = latestGreeting?.message || 'Hello from the Vercel demo!';
-  output.textContent = `${baseMessage} Let’s build something great, ${value}!`;
-}
-
-async function fetchGreeting() {
-  if (isFetchingGreeting) {
-    return;
-  }
-
-  const messageEl = document.getElementById('api-message');
-  const timestampEl = document.getElementById('api-timestamp');
-  const refreshButton = document.getElementById('refresh-btn');
-
-  if (!messageEl || !timestampEl) {
-    return;
-  }
-
-  isFetchingGreeting = true;
-  messageEl.textContent = 'Requesting the latest message…';
-  timestampEl.textContent = '';
-
-  if (refreshButton) {
-    refreshButton.disabled = true;
-    refreshButton.textContent = 'Refreshing…';
-  }
-
+function loadStats() {
+  const fallback = { gamesPlayed: 0, bestScore: null, lastScore: null };
   try {
-    const response = await fetch('/api/hello');
-
-    if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    latestGreeting = data;
-    messageEl.textContent = data.message;
-    timestampEl.textContent = `Received at ${new Date(data.timestamp).toLocaleString()}`;
-  } catch (error) {
-    console.error('Unable to load the API response:', error);
-    latestGreeting = null;
-    messageEl.textContent = 'Something went wrong while reaching the API.';
-  } finally {
-    isFetchingGreeting = false;
-    if (refreshButton) {
-      refreshButton.disabled = false;
-      refreshButton.textContent = 'Refresh';
-    }
-    updatePersonalizedPreview();
-  }
-}
-
-function setupPersonalizer() {
-  const form = document.getElementById('personalize-form');
-  const input = document.getElementById('name-input');
-
-  if (!form || !input) {
-    return;
-  }
-
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    updatePersonalizedPreview();
-    input.focus();
-  });
-
-  input.addEventListener('input', () => {
-    updatePersonalizedPreview();
-  });
-
-  updatePersonalizedPreview();
-}
-
-function loadChecklistState(key) {
-  try {
-    const stored = localStorage.getItem(key);
+    const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) {
-      return {};
+      return { ...fallback };
     }
+
     const parsed = JSON.parse(stored);
-    if (typeof parsed === 'object' && parsed !== null) {
-      return parsed;
-    }
+    const gamesPlayed = Number.isInteger(parsed?.gamesPlayed) && parsed.gamesPlayed > 0
+      ? parsed.gamesPlayed
+      : 0;
+    const bestScore = Number.isInteger(parsed?.bestScore) && parsed.bestScore > 0
+      ? parsed.bestScore
+      : null;
+    const lastScore = Number.isInteger(parsed?.lastScore) && parsed.lastScore > 0
+      ? parsed.lastScore
+      : null;
+
+    return { gamesPlayed, bestScore, lastScore };
   } catch (error) {
-    console.warn('Unable to read checklist progress from localStorage:', error);
+    console.warn('Unable to load mission records from localStorage:', error);
+    return { ...fallback };
   }
-  return {};
 }
 
-function saveChecklistState(key, value) {
+function saveStats(value) {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
   } catch (error) {
-    console.warn('Unable to save checklist progress to localStorage:', error);
+    console.warn('Unable to save mission records to localStorage:', error);
   }
 }
 
-function setupChecklist() {
-  const checklistEl = document.getElementById('checklist');
-  const progressBar = document.getElementById('progress-bar');
-  const progressLabel = document.getElementById('progress-label');
-
-  if (!checklistEl || !progressBar || !progressLabel) {
-    return;
+function formatAttempts(value) {
+  if (!value || value < 1) {
+    return '—';
   }
-
-  const STORAGE_KEY = 'vercel-demo-checklist';
-  const tasks = [
-    { id: 'repo', label: 'Connect your Git repository to Vercel' },
-    { id: 'env', label: 'Configure required environment variables' },
-    { id: 'preview', label: 'Test a preview deployment and share the link' },
-    { id: 'monitoring', label: 'Set up monitoring or analytics for launch day' },
-    { id: 'teammates', label: 'Invite teammates to collaborate on the project' }
-  ];
-
-  const savedState = loadChecklistState(STORAGE_KEY);
-
-  function updateProgress() {
-    const checkboxes = checklistEl.querySelectorAll('input[type="checkbox"]');
-    const completed = Array.from(checkboxes).filter((checkbox) => checkbox.checked).length;
-    const percent = Math.round((completed / tasks.length) * 100);
-
-    progressBar.style.width = `${percent}%`;
-    progressBar.setAttribute('aria-valuenow', String(percent));
-    progressBar.setAttribute(
-      'aria-valuetext',
-      `${completed} of ${tasks.length} steps complete`
-    );
-    progressLabel.textContent = `You're ${completed} of ${tasks.length} steps done (${percent}%).`;
-  }
-
-  tasks.forEach((task) => {
-    const listItem = document.createElement('li');
-    const label = document.createElement('label');
-    label.className = 'checklist-item';
-
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.id = `checklist-${task.id}`;
-    checkbox.checked = Boolean(savedState[task.id]);
-    checkbox.dataset.taskId = task.id;
-
-    const text = document.createElement('span');
-    text.textContent = task.label;
-
-    checkbox.addEventListener('change', () => {
-      savedState[task.id] = checkbox.checked;
-      saveChecklistState(STORAGE_KEY, savedState);
-      updateProgress();
-    });
-
-    label.append(checkbox, text);
-    listItem.append(label);
-    checklistEl.append(listItem);
-  });
-
-  progressBar.setAttribute('role', 'progressbar');
-  progressBar.setAttribute('aria-valuemin', '0');
-  progressBar.setAttribute('aria-valuemax', '100');
-  progressBar.setAttribute('aria-label', 'Launch checklist progress');
-
-  updateProgress();
+  return value === 1 ? '1 attempt' : `${value} attempts`;
 }
 
-function setupTips() {
-  const tipMessage = document.getElementById('tip-message');
-  const tipButton = document.getElementById('tip-button');
+function updateStatsUI(elements) {
+  const { bestScoreValue, gamesPlayedValue, lastScoreValue, bestPillValue } = elements;
 
-  if (!tipMessage || !tipButton) {
-    return;
+  bestScoreValue.textContent = formatAttempts(stats.bestScore);
+  gamesPlayedValue.textContent = stats.gamesPlayed.toString();
+  lastScoreValue.textContent = formatAttempts(stats.lastScore);
+  if (bestPillValue) {
+    bestPillValue.textContent = formatAttempts(stats.bestScore);
+  }
+}
+
+function updateAttemptCount(attemptCountEl) {
+  attemptCountEl.textContent = attempts === 0 ? '0 attempts' : formatAttempts(attempts);
+}
+
+function updateRangeDisplay(rangeDisplayEl) {
+  rangeDisplayEl.textContent = `Launch window: ${currentRange.min} – ${currentRange.max}.`;
+}
+
+function setStatusMessage(statusEl, message) {
+  statusEl.textContent = message;
+}
+
+function resetHistory(historyList, historyEmpty) {
+  historyList.innerHTML = '';
+  historyEmpty.hidden = false;
+}
+
+function appendHistoryEntry(historyList, historyEmpty, guess, outcome) {
+  historyEmpty.hidden = true;
+
+  const listItem = document.createElement('li');
+  listItem.className = 'history-item';
+
+  const attemptBadge = document.createElement('span');
+  attemptBadge.className = 'history-attempt';
+  attemptBadge.textContent = `#${attempts}`;
+
+  const details = document.createElement('div');
+  details.className = 'history-details';
+
+  const guessText = document.createElement('span');
+  guessText.className = 'history-guess';
+  guessText.textContent = `Guessed ${guess}`;
+
+  const result = document.createElement('span');
+  result.className = `history-result history-result--${outcome}`;
+  if (outcome === 'correct') {
+    result.textContent = 'Direct hit';
+  } else if (outcome === 'low') {
+    result.textContent = 'Too low';
+  } else {
+    result.textContent = 'Too high';
   }
 
-  const tips = [
-    'Preview deployments are perfect for gathering quick feedback from stakeholders.',
-    'Use environment variables to keep secrets out of your repository.',
-    'Need scheduled jobs? Pair serverless functions with background cron triggers.',
-    'Share the preview URL with teammates so they can comment before you ship.',
-    'Monitor function logs in the Vercel dashboard to understand real traffic patterns.'
-  ];
+  details.append(guessText, result);
+  listItem.append(attemptBadge, details);
+  historyList.append(listItem);
+}
 
-  let previousIndex = -1;
-
-  function showRandomTip() {
-    let nextIndex = Math.floor(Math.random() * tips.length);
-    if (tips.length > 1 && nextIndex === previousIndex) {
-      nextIndex = (nextIndex + 1) % tips.length;
-    }
-    previousIndex = nextIndex;
-    tipMessage.textContent = tips[nextIndex];
+function recordWin(statsElements) {
+  stats.gamesPlayed += 1;
+  stats.lastScore = attempts;
+  if (stats.bestScore === null || attempts < stats.bestScore) {
+    stats.bestScore = attempts;
   }
+  saveStats(stats);
+  updateStatsUI(statsElements);
+}
 
-  tipButton.addEventListener('click', () => {
-    showRandomTip();
-    tipButton.blur();
-  });
+function startNewGame(options) {
+  const {
+    rangeDisplayEl,
+    statusEl,
+    historyList,
+    historyEmpty,
+    guessInput,
+    guessButton,
+    attemptCountEl,
+    newGameButton,
+    initialRun = false
+  } = options;
 
-  showRandomTip();
+  secretNumber = Math.floor(
+    Math.random() * (DEFAULT_RANGE.max - DEFAULT_RANGE.min + 1)
+  ) + DEFAULT_RANGE.min;
+  attempts = 0;
+  currentRange = { ...DEFAULT_RANGE };
+  gameActive = true;
+
+  resetHistory(historyList, historyEmpty);
+  updateRangeDisplay(rangeDisplayEl);
+  updateAttemptCount(attemptCountEl);
+  setStatusMessage(
+    statusEl,
+    'A fresh launch code is live. Enter a number between 1 and 100 to begin your search.'
+  );
+
+  guessInput.value = '';
+  guessInput.disabled = false;
+  guessButton.disabled = false;
+  guessInput.focus();
+
+  newGameButton.textContent = initialRun ? 'New game' : 'Restart game';
+}
+
+function completeGame({
+  statusEl,
+  guessInput,
+  guessButton,
+  newGameButton,
+  statsElements
+}) {
+  gameActive = false;
+  guessInput.disabled = true;
+  guessButton.disabled = true;
+  newGameButton.textContent = 'Play again';
+  newGameButton.focus();
+  recordWin(statsElements);
+  setStatusMessage(
+    statusEl,
+    `Direct hit! You cracked the launch code in ${formatAttempts(attempts)}.`
+  );
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const refreshButton = document.getElementById('refresh-btn');
-  if (refreshButton) {
-    refreshButton.addEventListener('click', () => {
-      fetchGreeting();
-    });
+  const rangeDisplayEl = document.getElementById('range-display');
+  const statusEl = document.getElementById('status-message');
+  const historyList = document.getElementById('guess-history');
+  const historyEmpty = document.getElementById('history-empty');
+  const guessForm = document.getElementById('guess-form');
+  const guessInput = document.getElementById('guess-input');
+  const guessButton = document.getElementById('guess-button');
+  const attemptCountEl = document.getElementById('attempt-count');
+  const newGameButton = document.getElementById('new-game-btn');
+  const resetStatsButton = document.getElementById('reset-stats-btn');
+  const bestScoreValue = document.getElementById('best-score-value');
+  const gamesPlayedValue = document.getElementById('games-played-value');
+  const lastScoreValue = document.getElementById('last-score-value');
+  const bestPillValue = document.getElementById('best-pill-value');
+
+  if (
+    !rangeDisplayEl ||
+    !statusEl ||
+    !historyList ||
+    !historyEmpty ||
+    !guessForm ||
+    !guessInput ||
+    !guessButton ||
+    !attemptCountEl ||
+    !newGameButton ||
+    !resetStatsButton ||
+    !bestScoreValue ||
+    !gamesPlayedValue ||
+    !lastScoreValue
+  ) {
+    return;
   }
 
-  setupPersonalizer();
-  setupChecklist();
-  setupTips();
-  fetchGreeting();
+  const statsElements = {
+    bestScoreValue,
+    gamesPlayedValue,
+    lastScoreValue,
+    bestPillValue
+  };
+
+  stats = loadStats();
+  updateStatsUI(statsElements);
+
+  newGameButton.addEventListener('click', () => {
+    startNewGame({
+      rangeDisplayEl,
+      statusEl,
+      historyList,
+      historyEmpty,
+      guessInput,
+      guessButton,
+      attemptCountEl,
+      newGameButton
+    });
+  });
+
+  resetStatsButton.addEventListener('click', () => {
+    stats = { gamesPlayed: 0, bestScore: null, lastScore: null };
+    saveStats(stats);
+    updateStatsUI(statsElements);
+    setStatusMessage(statusEl, 'Mission records cleared. Try for a new personal best!');
+  });
+
+  guessForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    if (!gameActive) {
+      setStatusMessage(statusEl, 'Round complete. Tap "Play again" to request a new code.');
+      return;
+    }
+
+    const rawValue = guessInput.value.trim();
+    if (rawValue.length === 0) {
+      setStatusMessage(statusEl, 'Enter a number between 1 and 100 to log a guess.');
+      guessInput.focus();
+      return;
+    }
+
+    const guess = Number(rawValue);
+    if (!Number.isFinite(guess) || !Number.isInteger(guess)) {
+      setStatusMessage(statusEl, 'Guesses need to be whole numbers. Try again.');
+      guessInput.focus();
+      return;
+    }
+
+    if (guess < DEFAULT_RANGE.min || guess > DEFAULT_RANGE.max) {
+      setStatusMessage(statusEl, 'Stay within the launch window: pick a number from 1 to 100.');
+      guessInput.focus();
+      return;
+    }
+
+    attempts += 1;
+    updateAttemptCount(attemptCountEl);
+
+    if (guess === secretNumber) {
+      appendHistoryEntry(historyList, historyEmpty, guess, 'correct');
+      completeGame({ statusEl, guessInput, guessButton, newGameButton, statsElements });
+      return;
+    }
+
+    if (guess < secretNumber) {
+      currentRange.min = Math.max(currentRange.min, guess + 1);
+      appendHistoryEntry(historyList, historyEmpty, guess, 'low');
+      setStatusMessage(
+        statusEl,
+        `${guess} is too low. Focus between ${currentRange.min} and ${currentRange.max}.`
+      );
+    } else {
+      currentRange.max = Math.min(currentRange.max, guess - 1);
+      appendHistoryEntry(historyList, historyEmpty, guess, 'high');
+      setStatusMessage(
+        statusEl,
+        `${guess} is too high. Focus between ${currentRange.min} and ${currentRange.max}.`
+      );
+    }
+
+    updateRangeDisplay(rangeDisplayEl);
+    guessInput.value = '';
+    guessInput.focus();
+  });
+
+  startNewGame({
+    rangeDisplayEl,
+    statusEl,
+    historyList,
+    historyEmpty,
+    guessInput,
+    guessButton,
+    attemptCountEl,
+    newGameButton,
+    initialRun: true
+  });
 });
