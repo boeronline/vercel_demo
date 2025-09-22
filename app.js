@@ -1,4 +1,5 @@
-const STORAGE_KEY = 'launch-code-stats';
+const STORAGE_KEY = 'brain-training-stats';
+const LEGACY_STORAGE_KEYS = ['launch-code-stats'];
 const DEFAULT_RANGE = { min: 1, max: 100 };
 
 let secretNumber = null;
@@ -7,14 +8,17 @@ let currentRange = { ...DEFAULT_RANGE };
 let gameActive = false;
 let stats = null;
 
-function loadStats() {
-  const fallback = { gamesPlayed: 0, bestScore: null, lastScore: null };
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) {
-      return { ...fallback };
-    }
+function tryReadStats(key) {
+  if (!key) {
+    return null;
+  }
 
+  const stored = localStorage.getItem(key);
+  if (!stored) {
+    return null;
+  }
+
+  try {
     const parsed = JSON.parse(stored);
     const gamesPlayed = Number.isInteger(parsed?.gamesPlayed) && parsed.gamesPlayed > 0
       ? parsed.gamesPlayed
@@ -28,43 +32,71 @@ function loadStats() {
 
     return { gamesPlayed, bestScore, lastScore };
   } catch (error) {
-    console.warn('Unable to load mission records from localStorage:', error);
-    return { ...fallback };
+    console.warn('Unable to parse stored stats for key', key, error);
+    return null;
   }
+}
+
+function loadStats() {
+  const fallback = { gamesPlayed: 0, bestScore: null, lastScore: null };
+
+  try {
+    const currentStats = tryReadStats(STORAGE_KEY);
+    if (currentStats) {
+      return currentStats;
+    }
+
+    for (const legacyKey of LEGACY_STORAGE_KEYS) {
+      const legacyStats = tryReadStats(legacyKey);
+      if (legacyStats) {
+        saveStats(legacyStats);
+        try {
+          localStorage.removeItem(legacyKey);
+        } catch (legacyError) {
+          console.warn('Unable to remove legacy stats key:', legacyKey, legacyError);
+        }
+        return legacyStats;
+      }
+    }
+  } catch (error) {
+    console.warn('Unable to load training log from localStorage:', error);
+  }
+
+  return { ...fallback };
 }
 
 function saveStats(value) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
   } catch (error) {
-    console.warn('Unable to save mission records to localStorage:', error);
+    console.warn('Unable to save training log to localStorage:', error);
   }
 }
 
-function formatAttempts(value) {
+function formatTries(value) {
   if (!value || value < 1) {
     return '—';
   }
-  return value === 1 ? '1 attempt' : `${value} attempts`;
+  return value === 1 ? '1 try' : `${value} tries`;
 }
 
 function updateStatsUI(elements) {
   const { bestScoreValue, gamesPlayedValue, lastScoreValue, bestPillValue } = elements;
 
-  bestScoreValue.textContent = formatAttempts(stats.bestScore);
+  bestScoreValue.textContent = formatTries(stats.bestScore);
   gamesPlayedValue.textContent = stats.gamesPlayed.toString();
-  lastScoreValue.textContent = formatAttempts(stats.lastScore);
+  lastScoreValue.textContent = formatTries(stats.lastScore);
   if (bestPillValue) {
-    bestPillValue.textContent = formatAttempts(stats.bestScore);
+    bestPillValue.textContent = formatTries(stats.bestScore);
   }
 }
 
 function updateAttemptCount(attemptCountEl) {
-  attemptCountEl.textContent = attempts === 0 ? '0 attempts' : formatAttempts(attempts);
+  attemptCountEl.textContent = attempts === 0 ? '0 tries' : formatTries(attempts);
 }
 
 function updateRangeDisplay(rangeDisplayEl) {
-  rangeDisplayEl.textContent = `Launch window: ${currentRange.min} – ${currentRange.max}.`;
+  rangeDisplayEl.textContent = `Hint range: ${currentRange.min} – ${currentRange.max}.`;
 }
 
 function setStatusMessage(statusEl, message) {
@@ -84,23 +116,23 @@ function appendHistoryEntry(historyList, historyEmpty, guess, outcome) {
 
   const attemptBadge = document.createElement('span');
   attemptBadge.className = 'history-attempt';
-  attemptBadge.textContent = `#${attempts}`;
+  attemptBadge.textContent = `Try ${attempts}`;
 
   const details = document.createElement('div');
   details.className = 'history-details';
 
   const guessText = document.createElement('span');
   guessText.className = 'history-guess';
-  guessText.textContent = `Guessed ${guess}`;
+  guessText.textContent = `Entered ${guess}`;
 
   const result = document.createElement('span');
   result.className = `history-result history-result--${outcome}`;
   if (outcome === 'correct') {
-    result.textContent = 'Direct hit';
+    result.textContent = 'Bullseye';
   } else if (outcome === 'low') {
-    result.textContent = 'Too low';
+    result.textContent = 'Aim higher';
   } else {
-    result.textContent = 'Too high';
+    result.textContent = 'Aim lower';
   }
 
   details.append(guessText, result);
@@ -143,7 +175,7 @@ function startNewGame(options) {
   updateAttemptCount(attemptCountEl);
   setStatusMessage(
     statusEl,
-    'A fresh launch code is live. Enter a number between 1 and 100 to begin your search.'
+    'Your warm-up is ready. Enter a number between 1 and 100 to log your first try.'
   );
 
   guessInput.value = '';
@@ -151,7 +183,7 @@ function startNewGame(options) {
   guessButton.disabled = false;
   guessInput.focus();
 
-  newGameButton.textContent = initialRun ? 'New game' : 'Restart game';
+  newGameButton.textContent = initialRun ? 'Begin session' : 'Restart session';
 }
 
 function completeGame({
@@ -164,12 +196,12 @@ function completeGame({
   gameActive = false;
   guessInput.disabled = true;
   guessButton.disabled = true;
-  newGameButton.textContent = 'Play again';
+  newGameButton.textContent = 'Run it again';
   newGameButton.focus();
   recordWin(statsElements);
   setStatusMessage(
     statusEl,
-    `Direct hit! You cracked the launch code in ${formatAttempts(attempts)}.`
+    `Bullseye! You solved the warm-up in ${formatTries(attempts)}.`
   );
 }
 
@@ -234,33 +266,33 @@ document.addEventListener('DOMContentLoaded', () => {
     stats = { gamesPlayed: 0, bestScore: null, lastScore: null };
     saveStats(stats);
     updateStatsUI(statsElements);
-    setStatusMessage(statusEl, 'Mission records cleared. Try for a new personal best!');
+    setStatusMessage(statusEl, 'Training log cleared. Let\'s set a new record soon.');
   });
 
   guessForm.addEventListener('submit', (event) => {
     event.preventDefault();
 
     if (!gameActive) {
-      setStatusMessage(statusEl, 'Round complete. Tap "Play again" to request a new code.');
+      setStatusMessage(statusEl, 'Session complete. Tap "Run it again" to keep practicing.');
       return;
     }
 
     const rawValue = guessInput.value.trim();
     if (rawValue.length === 0) {
-      setStatusMessage(statusEl, 'Enter a number between 1 and 100 to log a guess.');
+      setStatusMessage(statusEl, 'Enter a number between 1 and 100 to log a try.');
       guessInput.focus();
       return;
     }
 
     const guess = Number(rawValue);
     if (!Number.isFinite(guess) || !Number.isInteger(guess)) {
-      setStatusMessage(statusEl, 'Guesses need to be whole numbers. Try again.');
+      setStatusMessage(statusEl, 'Tries must be whole numbers. Give it another shot.');
       guessInput.focus();
       return;
     }
 
     if (guess < DEFAULT_RANGE.min || guess > DEFAULT_RANGE.max) {
-      setStatusMessage(statusEl, 'Stay within the launch window: pick a number from 1 to 100.');
+      setStatusMessage(statusEl, 'Stay within the hint range: pick a number from 1 to 100.');
       guessInput.focus();
       return;
     }
@@ -279,14 +311,14 @@ document.addEventListener('DOMContentLoaded', () => {
       appendHistoryEntry(historyList, historyEmpty, guess, 'low');
       setStatusMessage(
         statusEl,
-        `${guess} is too low. Focus between ${currentRange.min} and ${currentRange.max}.`
+        `${guess} is too low. Aim higher between ${currentRange.min} and ${currentRange.max}.`
       );
     } else {
       currentRange.max = Math.min(currentRange.max, guess - 1);
       appendHistoryEntry(historyList, historyEmpty, guess, 'high');
       setStatusMessage(
         statusEl,
-        `${guess} is too high. Focus between ${currentRange.min} and ${currentRange.max}.`
+        `${guess} is too high. Aim lower between ${currentRange.min} and ${currentRange.max}.`
       );
     }
 
