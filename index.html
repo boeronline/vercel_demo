@@ -4,16 +4,45 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Vercel NPM Web App Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="background" aria-hidden="true">
+      <div class="background__glow background__glow--one"></div>
+      <div class="background__glow background__glow--two"></div>
+      <div class="background__grid"></div>
+    </div>
+
     <main class="container">
-      <header class="hero">
-        <h1>Welcome to the Vercel Demo</h1>
+      <nav class="top-nav" aria-label="Primary">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">▲</span>
+          <span class="brand-text">Launch Studio</span>
+        </div>
+        <span class="status-pill">
+          <span class="status-dot" aria-hidden="true"></span>
+          Ready to deploy
+        </span>
+      </nav>
+
+      <header class="hero card hero-card">
+        <p class="eyebrow">Experience preview</p>
+        <h1><span class="gradient-text">Welcome to the Vercel Demo</span></h1>
         <p>
-          Explore how a lightweight static site can talk to serverless functions and
-          guide you toward launch-ready projects.
+          Explore how a lightweight static site can speak to serverless functions while
+          guiding your team toward a polished, launch-ready experience.
         </p>
+        <div class="hero-badges" role="list">
+          <span class="hero-badge" role="listitem">Serverless ready</span>
+          <span class="hero-badge" role="listitem">Instant previews</span>
+          <span class="hero-badge" role="listitem">Collaborative launchpad</span>
+        </div>
       </header>
 
       <section class="card" id="api-card">
