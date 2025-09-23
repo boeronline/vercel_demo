@@ -5,6 +5,216 @@ const MAX_SESSIONS_STORED = 60;
 const DATE_OPTIONS = { month: 'short', day: 'numeric' };
 const TIME_OPTIONS = { hour: 'numeric', minute: '2-digit' };
 
+const LANGUAGE_STORAGE_KEY = 'synapse-studio-language';
+const DEFAULT_LANGUAGE = 'en';
+const SUPPORTED_LANGUAGES = ['en', 'nl'];
+
+const translations = {
+  en: {
+    documentTitle: 'Synapse Studio',
+    header: {
+      brandTitle: 'Synapse Studio',
+      brandSubtitle: 'Daily circuits for a sharper mind',
+      statusLabel: 'Current focus'
+    },
+    language: {
+      label: 'Change language',
+      english: 'English',
+      dutch: 'Dutch'
+    },
+    briefing: {
+      eyebrow: 'Daily briefing',
+      title: "How today's training flows",
+      lede:
+        'Warm up with three science-backed drills. Each circuit strengthens a different mental skill while your progress stays private on this device.',
+      highlights: [
+        'Rotate between dual n-back, Stroop focus, and task switching to train memory, attention, and flexibility.',
+        'Read the quick explainer before each drill so you always know what to do.',
+        'Track your streak, completed sessions, and stored history in the overview cards.'
+      ]
+    },
+    summary: {
+      streakLabel: 'Streak',
+      streakHint: 'Finish one exercise per day to extend your streak.',
+      todayLabel: "Today's sessions",
+      todayHint: 'Every completed drill adds to your daily total.',
+      storageNote:
+        "Storage note: all training history stays on this device in private browser storage."
+    },
+    stats: {
+      title: 'Progress logbook',
+      intro: 'Select a circuit to inspect its personal best, trend, and recent entries.',
+      bestLabel: 'Personal best',
+      totalLabel: 'Total sessions',
+      latestLabel: 'Latest result',
+      recentTitle: 'Recent sessions',
+      recentEmpty: 'No sessions logged yet.',
+      clearExercise: 'Clear this exercise',
+      resetAll: 'Reset all progress',
+      footnote:
+        'These records live only in local storage so you can track growth without creating an account.',
+      chartPlaceholder: 'Complete a few sessions to unlock your trend line.'
+    },
+    footer: {
+      message: 'Practice a little each day to keep your mind limber.'
+    },
+    confirmations: {
+      resetExercise: 'Clear all saved sessions for {{name}}? This cannot be undone.',
+      resetAll: 'Reset all saved training data?'
+    },
+    metrics: {
+      day: { singular: 'day', plural: 'days' },
+      session: { singular: 'session', plural: 'sessions' },
+      loggedSuffix: 'logged'
+    }
+  },
+  nl: {
+    documentTitle: 'Synapse Studio',
+    header: {
+      brandTitle: 'Synapse Studio',
+      brandSubtitle: 'Dagelijkse circuits voor een scherpere geest',
+      statusLabel: 'Huidige focus'
+    },
+    language: {
+      label: 'Taal wijzigen',
+      english: 'Engels',
+      dutch: 'Nederlands'
+    },
+    briefing: {
+      eyebrow: 'Dagelijkse briefing',
+      title: 'Zo verloopt de training van vandaag',
+      lede:
+        'Begin met drie wetenschappelijk onderbouwde oefeningen. Elk circuit versterkt een andere mentale vaardigheid terwijl je voortgang privé op dit apparaat blijft.',
+      highlights: [
+        'Wissel tussen dual n-back, Stroop focus en taakwisselen om geheugen, aandacht en flexibiliteit te trainen.',
+        'Lees de korte uitleg voor elke oefening zodat je precies weet wat je moet doen.',
+        'Volg je reeks, voltooide sessies en opgeslagen geschiedenis in de overzichtskaarten.'
+      ]
+    },
+    summary: {
+      streakLabel: 'Reeks',
+      streakHint: 'Rond elke dag minstens één oefening af om je reeks te verlengen.',
+      todayLabel: 'Sessies van vandaag',
+      todayHint: 'Elke afgeronde oefening telt mee voor je dagtotaal.',
+      storageNote:
+        'Opslagnotitie: alle trainingsgeschiedenis blijft op dit apparaat in privé browseropslag.'
+    },
+    stats: {
+      title: 'Logboek voortgang',
+      intro: 'Kies een circuit om de beste score, trend en recente sessies te bekijken.',
+      bestLabel: 'Persoonlijk record',
+      totalLabel: 'Totaal aantal sessies',
+      latestLabel: 'Laatste resultaat',
+      recentTitle: 'Recente sessies',
+      recentEmpty: 'Nog geen sessies geregistreerd.',
+      clearExercise: 'Wis deze oefening',
+      resetAll: 'Herstel alle voortgang',
+      footnote:
+        'Deze gegevens blijven alleen in lokale opslag zodat je zonder account vooruitgang kunt volgen.',
+      chartPlaceholder: 'Voltooi een paar sessies om je trendlijn te ontgrendelen.'
+    },
+    footer: {
+      message: 'Oefen elke dag een beetje om je geest lenig te houden.'
+    },
+    confirmations: {
+      resetExercise: 'Alle opgeslagen sessies voor {{name}} wissen? Dit kan niet ongedaan worden gemaakt.',
+      resetAll: 'Alle opgeslagen trainingsgegevens herstellen?'
+    },
+    metrics: {
+      day: { singular: 'dag', plural: 'dagen' },
+      session: { singular: 'sessie', plural: 'sessies' },
+      loggedSuffix: 'geregistreerd'
+    }
+  }
+};
+
+const EXERCISE_COPY = {
+  'dual-n-back': {
+    en: {
+      name: 'Dual N-Back Focus',
+      shortName: 'Dual n-back',
+      tagline: 'Track locations and letters simultaneously to strengthen working memory.',
+      highlights: [
+        'Mark when the square or letter matches the one from N steps earlier.',
+        'Accurate rounds nudge the level up to keep challenging your span.',
+        'Pairs are logged so you can review decisions after each session.'
+      ],
+      measurementIntro:
+        'Maintain high accuracy while juggling spatial and audio streams. Higher values signal stronger dual-task control.',
+      chartLabel: 'Accuracy (%)'
+    },
+    nl: {
+      name: 'Dual N-Back Focus',
+      shortName: 'Dual n-back',
+      tagline: 'Volg locaties en letters tegelijk om het werkgeheugen te versterken.',
+      highlights: [
+        'Markeer wanneer het vakje of de letter overeenkomt met die van N stappen geleden.',
+        'Bij nauwkeurige rondes stijgt het niveau zodat je spanbreedte uitgedaagd blijft.',
+        'Koppels worden opgeslagen zodat je beslissingen na elke sessie kunt terugzien.'
+      ],
+      measurementIntro:
+        'Behoud hoge nauwkeurigheid terwijl je ruimtelijke en auditieve signalen combineert. Hogere waarden betekenen sterker dubbeltaakbeheer.',
+      chartLabel: 'Nauwkeurigheid (%)'
+    }
+  },
+  'stroop-focus': {
+    en: {
+      name: 'Stroop Focus Lab',
+      shortName: 'Stroop focus',
+      tagline: 'Select the ink colour while ignoring the word to sharpen cognitive control.',
+      highlights: [
+        'Tap the button that matches the ink colour—not the word you read.',
+        'As accuracy stays high the palette grows and the rhythm speeds up.',
+        'Review each cue to spot where interference tripped you up.'
+      ],
+      measurementIntro:
+        'High accuracy with swift responses indicates improved interference control.',
+      chartLabel: 'Accuracy (%)'
+    },
+    nl: {
+      name: 'Stroop Focus Lab',
+      shortName: 'Stroop focus',
+      tagline: 'Kies de inktkleur en negeer het woord om je cognitieve controle te scherpen.',
+      highlights: [
+        'Tik op de knop die overeenkomt met de inktkleur—niet met het woord dat je ziet.',
+        'Bij hoge nauwkeurigheid wordt het palet groter en versnelt het tempo.',
+        'Bekijk elke cue om te zien waar interferentie je verraste.'
+      ],
+      measurementIntro:
+        'Hoge nauwkeurigheid met snelle reacties wijst op betere interferentiecontrole.',
+      chartLabel: 'Nauwkeurigheid (%)'
+    }
+  },
+  'task-switch': {
+    en: {
+      name: 'Task Switch Circuit',
+      shortName: 'Task switch',
+      tagline: 'Shift between vowel and parity checks to build cognitive flexibility.',
+      highlights: [
+        'Rules shift throughout the circuit—watch the banner before you answer.',
+        'High accuracy and quick reactions unlock longer, faster circuits.',
+        'Session history shows where rule switches caused slips.'
+      ],
+      measurementIntro:
+        'Stay accurate while the active rule changes. Higher percentages reflect stronger task switching.',
+      chartLabel: 'Accuracy (%)'
+    },
+    nl: {
+      name: 'Task Switch Circuit',
+      shortName: 'Task switch',
+      tagline: 'Schakel tussen klinker- en even/oneven-controles om cognitieve flexibiliteit op te bouwen.',
+      highlights: [
+        'Regels wisselen tijdens het circuit—let op de banner voordat je antwoordt.',
+        'Met hoge nauwkeurigheid en snelle reacties ontgrendel je langere, snellere circuits.',
+        'De sessiegeschiedenis laat zien waar regelwisselingen tot fouten leidden.'
+      ],
+      measurementIntro:
+        'Blijf nauwkeurig terwijl de actieve regel verandert. Hogere percentages betekenen betere taakwisseling.',
+      chartLabel: 'Nauwkeurigheid (%)'
+    }
+  }
+};
+
 const exercises = [
   createDualNBackExercise(),
   createStroopFocusExercise(),
@@ -15,6 +225,7 @@ const exerciseLookup = new Map(exercises.map((exercise) => [exercise.id, exercis
 
 const ui = {
   statusPillValue: null,
+  languageSelect: null,
   exerciseTitle: null,
   exerciseTagline: null,
   exerciseHighlights: null,
@@ -34,6 +245,7 @@ const ui = {
 };
 
 let progress = null;
+let currentLanguage = DEFAULT_LANGUAGE;
 let activeExercise = null;
 let activeInstance = null;
 
@@ -41,6 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
   captureUIReferences();
   progress = loadProgress();
   ensureExerciseState(progress);
+  const savedLanguage = loadLanguagePreference();
+  applyLanguage(savedLanguage, { skipExercise: true, skipTabs: true });
+  setupLanguageSwitcher();
   const migrated = migrateLegacyIfNeeded(progress);
   if (migrated) {
     persistProgress();
@@ -54,6 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function captureUIReferences() {
   ui.statusPillValue = document.getElementById('status-pill-value');
+  ui.languageSelect = document.getElementById('language-select');
   ui.exerciseTitle = document.getElementById('exercise-title');
   ui.exerciseTagline = document.getElementById('exercise-tagline');
   ui.exerciseHighlights = document.getElementById('exercise-highlights');
@@ -72,6 +288,168 @@ function captureUIReferences() {
   ui.resetAllBtn = document.getElementById('reset-all-btn');
 }
 
+function getTranslationEntry(key, language = currentLanguage) {
+  const parts = key.split('.');
+  let value = translations[language];
+  for (const part of parts) {
+    if (value == null) {
+      break;
+    }
+    if (Array.isArray(value)) {
+      const index = Number(part);
+      if (Number.isNaN(index) || index < 0 || index >= value.length) {
+        value = undefined;
+      } else {
+        value = value[index];
+      }
+    } else {
+      value = value[part];
+    }
+  }
+  if (typeof value === 'undefined' && language !== DEFAULT_LANGUAGE) {
+    return getTranslationEntry(key, DEFAULT_LANGUAGE);
+  }
+  return value;
+}
+
+function formatTemplate(template, params = {}) {
+  if (typeof template !== 'string') {
+    return template;
+  }
+  return template.replace(/{{\s*(\w+)\s*}}/g, (match, token) => {
+    if (typeof params[token] === 'undefined') {
+      return match;
+    }
+    return params[token];
+  });
+}
+
+function translate(key, params = {}, language = currentLanguage) {
+  const entry = getTranslationEntry(key, language);
+  if (typeof entry === 'string') {
+    return formatTemplate(entry, params);
+  }
+  return entry;
+}
+
+function formatCount(value, metricKey) {
+  const forms = translate(`metrics.${metricKey}`);
+  if (forms && typeof forms === 'object') {
+    const label = value === 1 ? forms.singular : forms.plural;
+    if (typeof label === 'string') {
+      return `${value} ${label}`;
+    }
+  }
+  return `${value}`;
+}
+
+function getExerciseCopy(exerciseId, language = currentLanguage) {
+  const copySet = EXERCISE_COPY[exerciseId] || {};
+  const fallback = copySet[DEFAULT_LANGUAGE] || copySet.en || {};
+  const localized = copySet[language] || {};
+  return { ...fallback, ...localized };
+}
+
+function loadLanguagePreference() {
+  try {
+    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (stored && SUPPORTED_LANGUAGES.includes(stored)) {
+      return stored;
+    }
+  } catch (error) {
+    console.warn('Unable to read language preference:', error);
+  }
+  const docLanguage = document.documentElement.lang;
+  if (SUPPORTED_LANGUAGES.includes(docLanguage)) {
+    return docLanguage;
+  }
+  return DEFAULT_LANGUAGE;
+}
+
+function persistLanguagePreference(language) {
+  try {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+  } catch (error) {
+    console.warn('Unable to persist language preference:', error);
+  }
+}
+
+function setupLanguageSwitcher() {
+  if (!ui.languageSelect) {
+    return;
+  }
+  ui.languageSelect.value = currentLanguage;
+  ui.languageSelect.addEventListener('change', (event) => {
+    applyLanguage(event.target.value);
+  });
+}
+
+function applyLanguage(language, options = {}) {
+  const { skipExercise = false, skipTabs = false } = options;
+  const targetLanguage = SUPPORTED_LANGUAGES.includes(language) ? language : DEFAULT_LANGUAGE;
+  currentLanguage = targetLanguage;
+  document.documentElement.lang = targetLanguage;
+
+  const title = translate('documentTitle');
+  if (typeof title === 'string' && title.length > 0) {
+    document.title = title;
+  }
+
+  if (ui.languageSelect) {
+    ui.languageSelect.value = targetLanguage;
+    const label = translate('language.label');
+    if (typeof label === 'string') {
+      ui.languageSelect.setAttribute('aria-label', label);
+      const languageLabel = document.querySelector("label[for='language-select']");
+      if (languageLabel) {
+        languageLabel.textContent = label;
+      }
+    }
+    const englishOption = ui.languageSelect.querySelector("option[value='en']");
+    if (englishOption) {
+      const text = translate('language.english');
+      if (typeof text === 'string') {
+        englishOption.textContent = text;
+      }
+    }
+    const dutchOption = ui.languageSelect.querySelector("option[value='nl']");
+    if (dutchOption) {
+      const text = translate('language.dutch');
+      if (typeof text === 'string') {
+        dutchOption.textContent = text;
+      }
+    }
+  }
+
+  document.querySelectorAll('[data-i18n]').forEach((element) => {
+    const key = element.getAttribute('data-i18n');
+    if (!key) {
+      return;
+    }
+    const value = translate(key);
+    if (typeof value === 'string') {
+      element.textContent = value;
+    }
+  });
+
+  updateDailySummary();
+
+  if (!skipExercise && activeExercise) {
+    updateExerciseMeta(activeExercise);
+    refreshStatsFor(activeExercise.id);
+    updateStatusPill(activeExercise.id);
+  }
+
+  if (!skipTabs) {
+    buildExerciseTabs();
+    if (activeExercise) {
+      updateTabSelection(activeExercise.id);
+    }
+  }
+
+  persistLanguagePreference(targetLanguage);
+}
+
 function determineInitialExerciseId() {
   if (progress?.lastExerciseId && exerciseLookup.has(progress.lastExerciseId)) {
     return progress.lastExerciseId;
@@ -85,6 +463,8 @@ function buildExerciseTabs() {
   }
 
   ui.exerciseTabs.innerHTML = '';
+  const activeId = activeExercise?.id || determineInitialExerciseId();
+
   exercises.forEach((exercise, index) => {
     const tab = document.createElement('button');
     tab.type = 'button';
@@ -92,12 +472,16 @@ function buildExerciseTabs() {
     tab.dataset.exerciseId = exercise.id;
     tab.setAttribute('role', 'tab');
     tab.setAttribute('aria-controls', 'exercise-body');
-    tab.textContent = `${exercise.icon} ${exercise.shortName || exercise.name}`;
+    const copy = getExerciseCopy(exercise.id);
+    const label = copy.shortName || copy.name || exercise.shortName || exercise.name;
+    tab.textContent = `${exercise.icon} ${label}`;
     tab.addEventListener('click', () => {
       selectExercise(exercise.id);
       tab.focus();
     });
-    tab.setAttribute('tabindex', index === 0 ? '0' : '-1');
+    const isActive = exercise.id === activeId || (!activeId && index === 0);
+    tab.setAttribute('tabindex', isActive ? '0' : '-1');
+    tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
     ui.exerciseTabs.append(tab);
   });
 }
@@ -136,17 +520,25 @@ function selectExercise(exerciseId) {
 }
 
 function updateExerciseMeta(exercise) {
+  const copy = getExerciseCopy(exercise.id);
+  const name = copy.name || exercise.name;
+  const tagline = copy.tagline || exercise.tagline;
+  const highlights = Array.isArray(copy.highlights) && copy.highlights.length > 0
+    ? copy.highlights
+    : exercise.highlights || [];
+  const measurementIntro = copy.measurementIntro || exercise.measurement.intro;
+
   if (ui.exerciseTitle) {
-    ui.exerciseTitle.textContent = `${exercise.icon} ${exercise.name}`;
+    ui.exerciseTitle.textContent = `${exercise.icon} ${name}`;
   }
 
   if (ui.exerciseTagline) {
-    ui.exerciseTagline.textContent = exercise.tagline;
+    ui.exerciseTagline.textContent = tagline;
   }
 
   if (ui.exerciseHighlights) {
     ui.exerciseHighlights.innerHTML = '';
-    exercise.highlights.forEach((highlight) => {
+    highlights.forEach((highlight) => {
       const item = document.createElement('li');
       item.textContent = highlight;
       ui.exerciseHighlights.append(item);
@@ -154,7 +546,7 @@ function updateExerciseMeta(exercise) {
   }
 
   if (ui.statsIntro) {
-    ui.statsIntro.textContent = exercise.measurement.intro;
+    ui.statsIntro.textContent = measurementIntro;
   }
 }
 
@@ -238,7 +630,10 @@ function renderChart(sessions, exercise) {
   if (numericSessions.length < 2) {
     const placeholder = document.createElement('p');
     placeholder.className = 'chart__empty';
-    placeholder.textContent = 'Complete a few sessions to unlock your trend line.';
+    const message = translate('stats.chartPlaceholder');
+    placeholder.textContent = typeof message === 'string'
+      ? message
+      : 'Complete a few sessions to unlock your trend line.';
     ui.progressChart.append(placeholder);
     return;
   }
@@ -254,7 +649,9 @@ function renderChart(sessions, exercise) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', `${exercise.measurement.chartLabel} for the last ${series.length} sessions.`);
+  const measurementCopy = getExerciseCopy(exercise.id);
+  const chartLabel = measurementCopy.chartLabel || exercise.measurement.chartLabel;
+  svg.setAttribute('aria-label', `${chartLabel} · ${formatCount(series.length, 'session')}`);
 
   const background = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
   background.setAttribute('x', '0');
@@ -348,11 +745,15 @@ function updateDailySummary() {
   }
 
   const streak = computeStreak(progress.calendar);
-  ui.streakValue.textContent = `${streak} ${pluralize(streak, 'day')}`;
+  ui.streakValue.textContent = formatCount(streak, 'day');
 
   const todayKey = getDateKey(new Date());
   const todaySessions = progress.calendar?.[todayKey]?.totalSessions || 0;
-  ui.todayValue.textContent = `${todaySessions} ${pluralize(todaySessions, 'session')} logged`;
+  const sessionCount = formatCount(todaySessions, 'session');
+  const suffix = translate('metrics.loggedSuffix');
+  ui.todayValue.textContent = typeof suffix === 'string' && suffix.length > 0
+    ? `${sessionCount} ${suffix}`
+    : sessionCount;
 }
 
 function attachResetHandlers() {
@@ -361,8 +762,13 @@ function attachResetHandlers() {
       if (!activeExercise) {
         return;
       }
+      const exerciseCopy = getExerciseCopy(activeExercise.id);
+      const exerciseName = exerciseCopy.name || activeExercise.name;
+      const confirmation = translate('confirmations.resetExercise', { name: exerciseName });
       const confirmed = window.confirm(
-        `Clear all saved sessions for ${activeExercise.name}? This cannot be undone.`
+        typeof confirmation === 'string'
+          ? confirmation
+          : `Clear all saved sessions for ${exerciseName}? This cannot be undone.`
       );
       if (!confirmed) {
         return;
@@ -378,7 +784,10 @@ function attachResetHandlers() {
 
   if (ui.resetAllBtn) {
     ui.resetAllBtn.addEventListener('click', () => {
-      const confirmed = window.confirm('Reset all saved training data?');
+      const confirmation = translate('confirmations.resetAll');
+      const confirmed = window.confirm(
+        typeof confirmation === 'string' ? confirmation : 'Reset all saved training data?'
+      );
       if (!confirmed) {
         return;
       }
