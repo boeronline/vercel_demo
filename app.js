@@ -41,6 +41,13 @@ const translations = {
       storageNote:
         "Storage note: all training history stays on this device in private browser storage."
     },
+    workspace: {
+      label: 'Choose a section',
+      tabs: {
+        training: 'Training drills',
+        progress: 'Progress logbook'
+      }
+    },
     stats: {
       title: 'Progress logbook',
       intro: 'Select a circuit to inspect its personal best, trend, and recent entries.',
@@ -98,6 +105,13 @@ const translations = {
       todayHint: 'Elke afgeronde oefening telt mee voor je dagtotaal.',
       storageNote:
         'Opslagnotitie: alle trainingsgeschiedenis blijft op dit apparaat in privé browseropslag.'
+    },
+    workspace: {
+      label: 'Kies een onderdeel',
+      tabs: {
+        training: 'Trainingsoefeningen',
+        progress: 'Voortgangslogboek'
+      }
     },
     stats: {
       title: 'Logboek voortgang',
@@ -226,6 +240,9 @@ const exerciseLookup = new Map(exercises.map((exercise) => [exercise.id, exercis
 const ui = {
   statusPillValue: null,
   languageSelect: null,
+  workspaceTabs: null,
+  workspaceTabButtons: [],
+  workspacePanels: [],
   exerciseTitle: null,
   exerciseTagline: null,
   exerciseHighlights: null,
@@ -248,6 +265,7 @@ let progress = null;
 let currentLanguage = DEFAULT_LANGUAGE;
 let activeExercise = null;
 let activeInstance = null;
+let activeWorkspacePanelId = 'exercise-card';
 
 document.addEventListener('DOMContentLoaded', () => {
   captureUIReferences();
@@ -261,6 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
     persistProgress();
   }
   buildExerciseTabs();
+  setupWorkspaceTabs();
   attachResetHandlers();
   const initialId = determineInitialExerciseId();
   selectExercise(initialId);
@@ -270,6 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function captureUIReferences() {
   ui.statusPillValue = document.getElementById('status-pill-value');
   ui.languageSelect = document.getElementById('language-select');
+  ui.workspaceTabs = document.getElementById('workspace-tabs');
   ui.exerciseTitle = document.getElementById('exercise-title');
   ui.exerciseTagline = document.getElementById('exercise-tagline');
   ui.exerciseHighlights = document.getElementById('exercise-highlights');
@@ -286,6 +306,7 @@ function captureUIReferences() {
   ui.statsIntro = document.getElementById('stats-intro');
   ui.resetExerciseBtn = document.getElementById('reset-exercise-btn');
   ui.resetAllBtn = document.getElementById('reset-all-btn');
+  ui.workspacePanels = Array.from(document.querySelectorAll('[data-workspace-panel]'));
 }
 
 function getTranslationEntry(key, language = currentLanguage) {
@@ -432,6 +453,17 @@ function applyLanguage(language, options = {}) {
     }
   });
 
+  if (ui.workspaceTabs) {
+    const label = translate('workspace.label');
+    if (typeof label === 'string') {
+      ui.workspaceTabs.setAttribute('aria-label', label);
+    }
+  }
+
+  if (activeWorkspacePanelId) {
+    activateWorkspaceTab(activeWorkspacePanelId, { skipFocus: true });
+  }
+
   updateDailySummary();
 
   if (!skipExercise && activeExercise) {
@@ -484,6 +516,127 @@ function buildExerciseTabs() {
     tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
     ui.exerciseTabs.append(tab);
   });
+}
+
+function setupWorkspaceTabs() {
+  if (!ui.workspaceTabs) {
+    return;
+  }
+
+  if (!ui.workspacePanels || ui.workspacePanels.length === 0) {
+    ui.workspacePanels = Array.from(document.querySelectorAll('[data-workspace-panel]'));
+  }
+
+  ui.workspaceTabButtons = Array.from(
+    ui.workspaceTabs.querySelectorAll('[role="tab"][data-target]')
+  );
+
+  if (ui.workspaceTabButtons.length === 0) {
+    return;
+  }
+
+  ui.workspaceTabButtons.forEach((button) => {
+    const targetId = button.dataset.target;
+    const isSelected = button.getAttribute('aria-selected') === 'true';
+    button.setAttribute('tabindex', isSelected ? '0' : '-1');
+    button.addEventListener('click', () => {
+      activateWorkspaceTab(targetId);
+    });
+    button.addEventListener('keydown', handleWorkspaceTabKeydown);
+  });
+
+  const initiallySelected =
+    ui.workspaceTabButtons.find((button) => button.getAttribute('aria-selected') === 'true') ||
+    ui.workspaceTabButtons[0];
+  if (initiallySelected) {
+    activateWorkspaceTab(initiallySelected.dataset.target, { skipFocus: true });
+  }
+}
+
+function activateWorkspaceTab(targetId, options = {}) {
+  if (!targetId) {
+    return;
+  }
+
+  const { skipFocus = false } = options;
+  let activeButton = null;
+
+  ui.workspaceTabButtons.forEach((button) => {
+    const isActive = button.dataset.target === targetId;
+    button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    button.setAttribute('tabindex', isActive ? '0' : '-1');
+    if (isActive) {
+      activeButton = button;
+    }
+  });
+
+  let matchedPanel = null;
+  ui.workspacePanels.forEach((panel) => {
+    const isTarget = panel.id === targetId;
+    if (isTarget) {
+      panel.removeAttribute('hidden');
+      panel.removeAttribute('aria-hidden');
+      matchedPanel = panel;
+    } else {
+      panel.setAttribute('hidden', 'true');
+      panel.setAttribute('aria-hidden', 'true');
+    }
+  });
+
+  if (!matchedPanel && ui.workspacePanels[0]) {
+    const fallback = ui.workspacePanels[0];
+    fallback.removeAttribute('hidden');
+    fallback.removeAttribute('aria-hidden');
+    activeWorkspacePanelId = fallback.id;
+  } else if (matchedPanel) {
+    activeWorkspacePanelId = matchedPanel.id;
+  }
+
+  if (!skipFocus && activeButton) {
+    activeButton.focus();
+  }
+}
+
+function handleWorkspaceTabKeydown(event) {
+  const buttons = ui.workspaceTabButtons;
+  if (!buttons || buttons.length === 0) {
+    return;
+  }
+
+  const currentIndex = buttons.indexOf(event.currentTarget);
+  if (currentIndex === -1) {
+    return;
+  }
+
+  let nextIndex = null;
+  switch (event.key) {
+    case 'ArrowRight':
+    case 'ArrowDown':
+      nextIndex = (currentIndex + 1) % buttons.length;
+      break;
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+      break;
+    case 'Home':
+      nextIndex = 0;
+      break;
+    case 'End':
+      nextIndex = buttons.length - 1;
+      break;
+    default:
+      return;
+  }
+
+  if (nextIndex == null) {
+    return;
+  }
+
+  event.preventDefault();
+  const nextButton = buttons[nextIndex];
+  if (nextButton) {
+    activateWorkspaceTab(nextButton.dataset.target);
+  }
 }
 
 function selectExercise(exerciseId) {

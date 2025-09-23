@@ -290,6 +290,7 @@ select {
   list-style: none;
   display: grid;
   gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .hero-highlight {
@@ -381,11 +382,62 @@ select {
   font-weight: 600;
 }
 
+.workspace {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.25rem, 3vw, 1.75rem);
+}
+
+.workspace-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--shadow-soft);
+}
+
+.workspace-tab {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0.6rem 1.35rem;
+  background: transparent;
+  color: var(--text-body);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.workspace-tab:hover {
+  transform: translateY(-1px);
+  color: var(--text-strong);
+}
+
+.workspace-tab[aria-selected='true'] {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(14, 165, 233, 0.85));
+  color: #fff;
+  box-shadow: 0 16px 36px rgba(79, 70, 229, 0.3);
+}
+
+.workspace-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
+}
+
 .app-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(1.75rem, 5vw, 2.5rem);
-  align-items: start;
+  align-items: stretch;
+}
+
+.panel[hidden] {
+  display: none;
 }
 
 .panel {
@@ -934,6 +986,16 @@ select {
   .status-pill {
     width: 100%;
     justify-content: center;
+  }
+
+  .workspace-tabs {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .workspace-tab {
+    flex: 1 1 160px;
+    text-align: center;
   }
 
   .module-bar {
