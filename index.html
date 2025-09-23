@@ -18,43 +18,52 @@
         <div class="ds-brand" role="presentation">
           <span class="ds-brand__icon" aria-hidden="true">🧠</span>
           <span class="ds-brand__text">
-            <span class="ds-brand__title">Synapse Studio</span>
-            <span class="ds-brand__subtitle">Daily circuits for a sharper mind</span>
+            <span class="ds-brand__title" data-i18n="header.brandTitle">Synapse Studio</span>
+            <span class="ds-brand__subtitle" data-i18n="header.brandSubtitle">Daily circuits for a sharper mind</span>
           </span>
         </div>
-        <span class="status-pill" role="status" aria-live="polite">
-          <span class="status-dot" aria-hidden="true"></span>
-          Current focus: <span id="status-pill-value">—</span>
-        </span>
+        <div class="header-actions">
+          <label class="visually-hidden" for="language-select" data-i18n="language.label">Change language</label>
+          <select class="language-select" id="language-select" aria-label="Change language">
+            <option value="en" data-i18n="language.english">English</option>
+            <option value="nl" data-i18n="language.dutch">Nederlands</option>
+          </select>
+          <span class="status-pill" role="status" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span data-i18n="header.statusLabel">Current focus</span>
+            <span class="status-separator" aria-hidden="true">:</span>
+            <span id="status-pill-value">—</span>
+          </span>
+        </div>
       </header>
 
       <section class="ds-screen ds-screen--top" aria-labelledby="briefing-title">
         <div class="briefing">
-          <p class="eyebrow">Daily briefing</p>
-          <h1 class="briefing__title" id="briefing-title">Training deck overview</h1>
-          <p class="briefing__lede">
+          <p class="eyebrow" data-i18n="briefing.eyebrow">Daily briefing</p>
+          <h1 class="briefing__title" id="briefing-title" data-i18n="briefing.title">Training deck overview</h1>
+          <p class="briefing__lede" data-i18n="briefing.lede">
             Cycle through clinically studied mental drills to exercise working memory, interference
             control, and cognitive flexibility. Each session is timestamped so you can watch your
             trends evolve.
           </p>
           <ul class="briefing__highlights" role="list">
-            <li class="briefing__highlight">Choose from dual n-back, Stroop focus, and adaptive task switching circuits.</li>
-            <li class="briefing__highlight">Progress stays on this device using private browser storage.</li>
-            <li class="briefing__highlight">Line charts reveal how your performance shifts over time.</li>
+            <li class="briefing__highlight" data-i18n="briefing.highlights.0">Choose from dual n-back, Stroop focus, and adaptive task switching circuits.</li>
+            <li class="briefing__highlight" data-i18n="briefing.highlights.1">Progress stays on this device using private browser storage.</li>
+            <li class="briefing__highlight" data-i18n="briefing.highlights.2">Line charts reveal how your performance shifts over time.</li>
           </ul>
         </div>
         <div class="daily-overview" aria-label="Daily training summary">
           <div class="summary-card" id="streak-card">
-            <p class="summary-card__label">Streak</p>
+            <p class="summary-card__label" data-i18n="summary.streakLabel">Streak</p>
             <p class="summary-card__value" id="streak-value">0 days</p>
-            <p class="summary-card__hint">Log at least one session per day to grow the streak.</p>
+            <p class="summary-card__hint" data-i18n="summary.streakHint">Log at least one session per day to grow the streak.</p>
           </div>
           <div class="summary-card" id="today-card">
-            <p class="summary-card__label">Today's sessions</p>
+            <p class="summary-card__label" data-i18n="summary.todayLabel">Today's sessions</p>
             <p class="summary-card__value" id="today-value">0 logged</p>
-            <p class="summary-card__hint">Your training log tallies every drill you finish.</p>
+            <p class="summary-card__hint" data-i18n="summary.todayHint">Your training log tallies every drill you finish.</p>
           </div>
-          <p class="storage-note">
+          <p class="storage-note" data-i18n="summary.storageNote">
             Storage note: all training history is written to your browser's local storage, never to a
             server.
           </p>
@@ -77,33 +86,33 @@
           </section>
 
           <section class="card stats-card" id="stats-card">
-            <h2>Progress logbook</h2>
-            <p id="stats-intro">Select a circuit to inspect its personal best, trend, and recent entries.</p>
+            <h2 data-i18n="stats.title">Progress logbook</h2>
+            <p id="stats-intro" data-i18n="stats.intro">Select a circuit to inspect its personal best, trend, and recent entries.</p>
             <dl class="stats-grid">
               <div class="stat">
-                <dt>Personal best</dt>
+                <dt data-i18n="stats.bestLabel">Personal best</dt>
                 <dd id="best-score-value">—</dd>
               </div>
               <div class="stat">
-                <dt>Total sessions</dt>
+                <dt data-i18n="stats.totalLabel">Total sessions</dt>
                 <dd id="sessions-count-value">0</dd>
               </div>
               <div class="stat">
-                <dt>Latest result</dt>
+                <dt data-i18n="stats.latestLabel">Latest result</dt>
                 <dd id="last-score-value">—</dd>
               </div>
             </dl>
             <div class="chart" id="progress-chart"></div>
             <div class="recent-results">
-              <h3>Recent sessions</h3>
-              <p class="history-empty" id="recent-empty">No sessions logged yet.</p>
+              <h3 data-i18n="stats.recentTitle">Recent sessions</h3>
+              <p class="history-empty" id="recent-empty" data-i18n="stats.recentEmpty">No sessions logged yet.</p>
               <ol class="history-list" id="recent-results-list" aria-live="polite"></ol>
             </div>
             <div class="logbook-actions">
-              <button class="button subtle" id="reset-exercise-btn" type="button">Clear this exercise</button>
-              <button class="button subtle" id="reset-all-btn" type="button">Reset all progress</button>
+              <button class="button subtle" id="reset-exercise-btn" type="button" data-i18n="stats.clearExercise">Clear this exercise</button>
+              <button class="button subtle" id="reset-all-btn" type="button" data-i18n="stats.resetAll">Reset all progress</button>
             </div>
-            <p class="storage-footnote">
+            <p class="storage-footnote" data-i18n="stats.footnote">
               These records live only in local storage so you can track growth without creating an account.
             </p>
           </section>
@@ -112,7 +121,7 @@
     </main>
 
     <footer class="site-footer">
-      <p>Practice a little each day to keep your mind limber.</p>
+      <p data-i18n="footer.message">Practice a little each day to keep your mind limber.</p>
     </footer>
     <script src="app.js" defer></script>
   </body>
