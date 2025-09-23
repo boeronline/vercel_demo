@@ -76,49 +76,94 @@
         </div>
       </header>
 
-      <section class="app-grid" aria-label="Training controls">
-        <section class="panel exercise-panel" id="exercise-card">
-          <div class="exercise-header">
-            <h2 id="exercise-title">Dual N-Back Focus</h2>
-            <nav class="exercise-tabs" id="exercise-tabs" role="tablist" aria-label="Select exercise"></nav>
-          </div>
-          <p class="exercise-tagline" id="exercise-tagline">
-            Track spatial and audio matches from N steps back to deepen working memory capacity.
-          </p>
-          <ul class="exercise-highlights" id="exercise-highlights" role="list"></ul>
-          <div class="exercise-body" id="exercise-body"></div>
-        </section>
+      <section class="workspace" aria-label="Training workspace">
+        <nav class="workspace-tabs" id="workspace-tabs" role="tablist" aria-label="Choose a section">
+          <button
+            class="workspace-tab"
+            id="workspace-tab-training"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="exercise-card"
+            data-target="exercise-card"
+            data-i18n="workspace.tabs.training"
+          >
+            Training drills
+          </button>
+          <button
+            class="workspace-tab"
+            id="workspace-tab-progress"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            tabindex="-1"
+            aria-controls="stats-card"
+            data-target="stats-card"
+            data-i18n="workspace.tabs.progress"
+          >
+            Progress logbook
+          </button>
+        </nav>
 
-        <section class="panel stats-panel" id="stats-card">
-          <h2 data-i18n="stats.title">Progress logbook</h2>
-          <p id="stats-intro" data-i18n="stats.intro">Select a circuit to inspect its personal best, trend, and recent entries.</p>
-          <dl class="stats-grid">
-            <div class="stat">
-              <dt data-i18n="stats.bestLabel">Personal best</dt>
-              <dd id="best-score-value">—</dd>
+        <section class="app-grid workspace-panels" aria-label="Training controls">
+          <section
+            class="panel exercise-panel"
+            id="exercise-card"
+            role="tabpanel"
+            aria-labelledby="workspace-tab-training"
+            data-workspace-panel
+          >
+            <div class="exercise-header">
+              <h2 id="exercise-title">Dual N-Back Focus</h2>
+              <nav class="exercise-tabs" id="exercise-tabs" role="tablist" aria-label="Select exercise"></nav>
             </div>
-            <div class="stat">
-              <dt data-i18n="stats.totalLabel">Total sessions</dt>
-              <dd id="sessions-count-value">0</dd>
+            <p class="exercise-tagline" id="exercise-tagline">
+              Track spatial and audio matches from N steps back to deepen working memory capacity.
+            </p>
+            <ul class="exercise-highlights" id="exercise-highlights" role="list"></ul>
+            <div class="exercise-body" id="exercise-body"></div>
+          </section>
+
+          <section
+            class="panel stats-panel"
+            id="stats-card"
+            role="tabpanel"
+            aria-labelledby="workspace-tab-progress"
+            data-workspace-panel
+            hidden
+          >
+            <h2 data-i18n="stats.title">Progress logbook</h2>
+            <p id="stats-intro" data-i18n="stats.intro">
+              Select a circuit to inspect its personal best, trend, and recent entries.
+            </p>
+            <dl class="stats-grid">
+              <div class="stat">
+                <dt data-i18n="stats.bestLabel">Personal best</dt>
+                <dd id="best-score-value">—</dd>
+              </div>
+              <div class="stat">
+                <dt data-i18n="stats.totalLabel">Total sessions</dt>
+                <dd id="sessions-count-value">0</dd>
+              </div>
+              <div class="stat">
+                <dt data-i18n="stats.latestLabel">Latest result</dt>
+                <dd id="last-score-value">—</dd>
+              </div>
+            </dl>
+            <div class="chart" id="progress-chart"></div>
+            <div class="recent-results">
+              <h3 data-i18n="stats.recentTitle">Recent sessions</h3>
+              <p class="history-empty" id="recent-empty" data-i18n="stats.recentEmpty">No sessions logged yet.</p>
+              <ol class="history-list" id="recent-results-list" aria-live="polite"></ol>
             </div>
-            <div class="stat">
-              <dt data-i18n="stats.latestLabel">Latest result</dt>
-              <dd id="last-score-value">—</dd>
+            <div class="logbook-actions">
+              <button class="button subtle" id="reset-exercise-btn" type="button" data-i18n="stats.clearExercise">Clear this exercise</button>
+              <button class="button subtle" id="reset-all-btn" type="button" data-i18n="stats.resetAll">Reset all progress</button>
             </div>
-          </dl>
-          <div class="chart" id="progress-chart"></div>
-          <div class="recent-results">
-            <h3 data-i18n="stats.recentTitle">Recent sessions</h3>
-            <p class="history-empty" id="recent-empty" data-i18n="stats.recentEmpty">No sessions logged yet.</p>
-            <ol class="history-list" id="recent-results-list" aria-live="polite"></ol>
-          </div>
-          <div class="logbook-actions">
-            <button class="button subtle" id="reset-exercise-btn" type="button" data-i18n="stats.clearExercise">Clear this exercise</button>
-            <button class="button subtle" id="reset-all-btn" type="button" data-i18n="stats.resetAll">Reset all progress</button>
-          </div>
-          <p class="storage-footnote" data-i18n="stats.footnote">
-            These records live only in local storage so you can track growth without creating an account.
-          </p>
+            <p class="storage-footnote" data-i18n="stats.footnote">
+              These records live only in local storage so you can track growth without creating an account.
+            </p>
+          </section>
         </section>
       </section>
     </main>
