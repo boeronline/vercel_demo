@@ -6,12 +6,12 @@ in local storage so you can monitor trends over time.
 
 ## Exercises
 
-- **Number Line Focus** – Locate a hidden number between 1 and 100 using high/low hints while aiming
-  to minimise your tries.
-- **Speed Sum Sprint** – Race through five addition or subtraction prompts and shave seconds off your
-  completion time.
-- **Memory Flash Recall** – Study a short digit sequence, let it disappear, then recreate it from
-  memory to boost your short-term recall accuracy.
+- **Dual N-Back Focus** – Monitor spatial positions and spoken letters simultaneously, marking
+  matches from N steps back to build working-memory span.
+- **Stroop Focus Lab** – Identify the ink colour of mismatched colour words to strengthen inhibitory
+  control and reaction time.
+- **Task Switch Circuit** – Alternate between vowel and parity rules to reinforce cognitive
+  flexibility while keeping accuracy high under time pressure.
 
 ## Progress tracking
 

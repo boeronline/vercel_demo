@@ -344,6 +344,136 @@ p {
   color: var(--ink-700);
 }
 
+.module-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.difficulty-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(31, 41, 55, 0.16);
+  background: rgba(44, 177, 188, 0.12);
+  color: var(--ink-700);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.nback-module,
+.stroop-module,
+.task-switch-module {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.nback-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.nback-cell {
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+  background: rgba(44, 177, 188, 0.1);
+  border: 1px solid rgba(44, 177, 188, 0.22);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nback-cell--active {
+  background: rgba(239, 131, 84, 0.24);
+  border-color: rgba(239, 131, 84, 0.5);
+  box-shadow: 0 12px 24px rgba(239, 131, 84, 0.18);
+}
+
+.nback-letter {
+  font-size: 2rem;
+  font-weight: 800;
+  text-align: center;
+  color: var(--ink-700);
+}
+
+.nback-controls {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.nback-controls .button {
+  flex: 1;
+}
+
+.button.subtle.is-active {
+  background: rgba(44, 177, 188, 0.24);
+  border-color: rgba(44, 177, 188, 0.4);
+  color: var(--sky-500);
+}
+
+.stroop-display,
+.task-switch-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.stroop-word {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stroop-progress,
+.task-switch-progress {
+  font-weight: 700;
+  color: var(--sky-500);
+}
+
+.stroop-options,
+.task-switch-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.stroop-options .button,
+.task-switch-controls .button {
+  flex: 1 1 45%;
+  min-width: 130px;
+}
+
+.task-switch-display {
+  flex-direction: column;
+}
+
+.task-switch-rule {
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sky-500);
+}
+
+.task-switch-prompt {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--ink-900);
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -650,12 +780,23 @@ input[type='number']:focus {
     align-items: stretch;
   }
 
+  .module-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .form-controls {
     flex-direction: column;
   }
 
   .button {
     width: 100%;
+  }
+
+  .stroop-options .button,
+  .task-switch-controls .button,
+  .nback-controls .button {
+    flex: 1 1 100%;
   }
 
   .logbook-actions {
