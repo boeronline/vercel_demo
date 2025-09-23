@@ -6,9 +6,9 @@ const DATE_OPTIONS = { month: 'short', day: 'numeric' };
 const TIME_OPTIONS = { hour: 'numeric', minute: '2-digit' };
 
 const exercises = [
-  createNumberLineExercise(),
-  createSpeedMathExercise(),
-  createMemoryFlashExercise()
+  createDualNBackExercise(),
+  createStroopFocusExercise(),
+  createTaskSwitchCircuit()
 ];
 
 const exerciseLookup = new Map(exercises.map((exercise) => [exercise.id, exercise]));
@@ -123,7 +123,11 @@ function selectExercise(exerciseId) {
     ui.exerciseBody.innerHTML = '';
     activeInstance = exercise.mount({
       container: ui.exerciseBody,
-      recordSession: (session) => recordSession(exerciseId, session)
+      recordSession: (session) => recordSession(exerciseId, session),
+      getState: () => getExerciseState(exerciseId),
+      getDifficulty: () =>
+        getExerciseDifficulty(exerciseId, exercise.initialDifficulty),
+      updateDifficulty: (value) => updateExerciseDifficulty(exerciseId, value)
     });
   }
 
@@ -423,10 +427,49 @@ function ensureExerciseState(data) {
   data.exercises = data.exercises || {};
   data.calendar = data.calendar || {};
   exercises.forEach((exercise) => {
-    if (!data.exercises[exercise.id]) {
-      data.exercises[exercise.id] = { sessions: [] };
+    const existing = data.exercises[exercise.id] || { sessions: [] };
+    existing.sessions = Array.isArray(existing.sessions) ? existing.sessions : [];
+    if (
+      typeof existing.difficulty === 'undefined' &&
+      typeof exercise.initialDifficulty !== 'undefined'
+    ) {
+      existing.difficulty = exercise.initialDifficulty;
     }
+    data.exercises[exercise.id] = existing;
   });
+}
+
+function getExerciseState(exerciseId) {
+  if (!progress || !progress.exercises) {
+    return { sessions: [] };
+  }
+  const state = progress.exercises[exerciseId];
+  if (!state) {
+    const fresh = { sessions: [] };
+    progress.exercises[exerciseId] = fresh;
+    return fresh;
+  }
+  state.sessions = Array.isArray(state.sessions) ? state.sessions : [];
+  return state;
+}
+
+function getExerciseDifficulty(exerciseId, fallback) {
+  const state = getExerciseState(exerciseId);
+  if (typeof state.difficulty === 'undefined' || state.difficulty === null) {
+    state.difficulty = fallback;
+  }
+  return state.difficulty;
+}
+
+function updateExerciseDifficulty(exerciseId, update) {
+  const state = getExerciseState(exerciseId);
+  const current = state.difficulty;
+  const nextValue = typeof update === 'function' ? update(current) : update;
+  if (typeof nextValue !== 'undefined' && nextValue !== current) {
+    state.difficulty = nextValue;
+    persistProgress();
+  }
+  return state.difficulty;
 }
 
 function migrateLegacyIfNeeded(data) {
@@ -599,69 +642,96 @@ function formatSeconds(value) {
   return `${rounded.toFixed(1)} sec`;
 }
 
-function createNumberLineExercise() {
-  const DEFAULT_RANGE = { min: 1, max: 100 };
+function createDualNBackExercise() {
+  const GRID_SIZE = 3;
+  const TOTAL_TRIALS = 18;
+  const TRIAL_DURATION = 2600;
+  const LETTERS = ['C', 'H', 'K', 'L', 'Q', 'R', 'S', 'T'];
+  const INITIAL_DIFFICULTY = 1;
+  const MAX_DIFFICULTY = 4;
 
   return {
-    id: 'number-line',
-    name: 'Number Line Focus',
-    shortName: 'Number line',
-    icon: '🎯',
-    tagline: 'Use high-low hints to zero in on the hidden number as efficiently as possible.',
+    id: 'dual-n-back',
+    name: 'Dual N-Back Focus',
+    shortName: 'Dual n-back',
+    icon: '🧩',
+    tagline: 'Track locations and letters simultaneously to strengthen working memory.',
     highlights: [
-      'Begin near the middle to keep your options flexible.',
-      'Update the hint range with every guess to move quickly.',
-      'Lower try counts push the trend line upward on the chart.'
+      'Mark when the square or letter matches the one from N steps earlier.',
+      'Accurate rounds nudge the level up to keep challenging your span.',
+      'Pairs are logged so you can review decisions after each session.'
     ],
     measurement: {
-      better: 'lower',
-      chartLabel: 'Tries per solve',
-      intro: 'Solve the hidden number in as few tries as you can. Lower values mean quicker focus.'
+      better: 'higher',
+      chartLabel: 'Accuracy (%)',
+      intro:
+        'Maintain high accuracy while juggling spatial and audio streams. Higher values signal stronger dual-task control.'
     },
-    mount({ container, recordSession }) {
+    initialDifficulty: INITIAL_DIFFICULTY,
+    mount({ container, recordSession, getDifficulty, updateDifficulty }) {
       if (!container) {
         return {};
       }
 
       container.innerHTML = `
-        <div class="number-line-module">
-          <button class="button primary" id="number-line-start" type="button">Start round</button>
-          <p class="range-display" id="number-line-range">Hint range: 1 – 100.</p>
-          <p class="game-status" id="number-line-status">Tap start to begin your warm-up.</p>
-          <form class="form" id="number-line-form" novalidate>
-            <label class="form-field" for="number-line-input">Enter your guess</label>
-            <div class="form-controls">
-              <input id="number-line-input" name="guess" type="number" min="1" max="100" inputmode="numeric" autocomplete="off" placeholder="e.g. 42" required />
-              <button class="button primary" id="number-line-submit" type="submit">Submit</button>
-            </div>
-          </form>
+        <div class="nback-module">
+          <div class="module-bar">
+            <button class="button primary" id="nback-start" type="button">Start training</button>
+            <span class="difficulty-pill" id="nback-difficulty">Level 1-back</span>
+          </div>
+          <div class="nback-grid" id="nback-grid" role="grid" aria-label="Spatial grid">
+            ${Array.from({ length: GRID_SIZE * GRID_SIZE })
+              .map((_, index) => `<span class="nback-cell" role="presentation" data-index="${index}"></span>`)
+              .join('')}
+          </div>
+          <p class="nback-letter" id="nback-letter" aria-live="polite">Letter: —</p>
+          <div class="nback-controls" role="group" aria-label="Dual n-back responses">
+            <button class="button subtle" id="nback-position" type="button" aria-pressed="false" disabled>Position match</button>
+            <button class="button subtle" id="nback-sound" type="button" aria-pressed="false" disabled>Letter match</button>
+          </div>
+          <p class="game-status" id="nback-status">Press start to monitor both streams.</p>
           <div class="history">
             <div class="history-header">
-              <h3>Session log</h3>
-              <span class="attempt-count" id="number-line-attempts">0 tries</span>
+              <h3>Trial breakdown</h3>
+              <span class="attempt-count" id="nback-progress">0 / ${TOTAL_TRIALS}</span>
             </div>
-            <p class="history-empty" id="number-line-empty">Your guesses will appear here.</p>
-            <ol class="history-list" id="number-line-history" aria-live="polite"></ol>
+            <p class="history-empty" id="nback-empty">Your responses will appear after each trial.</p>
+            <ol class="history-list" id="nback-history" aria-live="polite"></ol>
           </div>
         </div>
       `;
 
       const elements = {
-        start: container.querySelector('#number-line-start'),
-        range: container.querySelector('#number-line-range'),
-        status: container.querySelector('#number-line-status'),
-        form: container.querySelector('#number-line-form'),
-        input: container.querySelector('#number-line-input'),
-        submit: container.querySelector('#number-line-submit'),
-        attempts: container.querySelector('#number-line-attempts'),
-        historyEmpty: container.querySelector('#number-line-empty'),
-        historyList: container.querySelector('#number-line-history')
+        start: container.querySelector('#nback-start'),
+        difficulty: container.querySelector('#nback-difficulty'),
+        status: container.querySelector('#nback-status'),
+        grid: container.querySelector('#nback-grid'),
+        letter: container.querySelector('#nback-letter'),
+        positionBtn: container.querySelector('#nback-position'),
+        soundBtn: container.querySelector('#nback-sound'),
+        progress: container.querySelector('#nback-progress'),
+        historyEmpty: container.querySelector('#nback-empty'),
+        historyList: container.querySelector('#nback-history')
       };
 
-      let secretNumber = null;
-      let attempts = 0;
-      let range = { ...DEFAULT_RANGE };
+      const cells = Array.from(elements.grid?.querySelectorAll('.nback-cell') || []);
+
+      let level = INITIAL_DIFFICULTY;
+      if (typeof getDifficulty === 'function') {
+        const stored = Number(getDifficulty());
+        if (Number.isFinite(stored) && stored >= 1) {
+          level = stored;
+        }
+      }
+
       let roundActive = false;
+      let awaitingInput = false;
+      let trialIndex = -1;
+      let sequence = [];
+      let response = { position: false, sound: false };
+      let trialTimer = null;
+      let correctDecisions = 0;
+      let totalDecisions = 0;
 
       function setStatus(message) {
         if (elements.status) {
@@ -669,19 +739,20 @@ function createNumberLineExercise() {
         }
       }
 
-      function setRangeDisplay() {
-        if (elements.range) {
-          elements.range.textContent = `Hint range: ${range.min} – ${range.max}.`;
+      function setDifficultyDisplay(currentLevel) {
+        if (elements.difficulty) {
+          elements.difficulty.textContent = `Level ${currentLevel}-back`;
         }
       }
 
-      function updateAttempts() {
-        if (elements.attempts) {
-          elements.attempts.textContent = attempts === 0 ? '0 tries' : formatTries(attempts);
+      function updateProgress() {
+        if (elements.progress) {
+          const current = Math.max(0, Math.min(TOTAL_TRIALS, trialIndex + 1));
+          elements.progress.textContent = `${current} / ${TOTAL_TRIALS}`;
         }
       }
 
-      function resetHistory() {
+      function clearHistory() {
         if (elements.historyList) {
           elements.historyList.innerHTML = '';
         }
@@ -690,7 +761,48 @@ function createNumberLineExercise() {
         }
       }
 
-      function appendHistory(guess, outcome) {
+      function clearHighlight() {
+        cells.forEach((cell) => cell.classList.remove('nback-cell--active'));
+      }
+
+      function highlightCell(index) {
+        clearHighlight();
+        const cell = cells[index];
+        if (cell) {
+          cell.classList.add('nback-cell--active');
+        }
+      }
+
+      function setLetterDisplay(letter) {
+        if (elements.letter) {
+          elements.letter.textContent = `Letter: ${letter}`;
+        }
+      }
+
+      function resetButtons() {
+        response = { position: false, sound: false };
+        setMatchButtonState(elements.positionBtn, false);
+        setMatchButtonState(elements.soundBtn, false);
+      }
+
+      function setButtonsEnabled(enabled) {
+        if (elements.positionBtn) {
+          elements.positionBtn.disabled = !enabled;
+        }
+        if (elements.soundBtn) {
+          elements.soundBtn.disabled = !enabled;
+        }
+      }
+
+      function setMatchButtonState(button, active) {
+        if (!button) {
+          return;
+        }
+        button.classList.toggle('is-active', Boolean(active));
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      }
+
+      function appendHistory(trialNumber, trial, expected, decision, correctness) {
         if (!elements.historyList || !elements.historyEmpty) {
           return;
         }
@@ -700,231 +812,340 @@ function createNumberLineExercise() {
 
         const attempt = document.createElement('span');
         attempt.className = 'history-attempt';
-        attempt.textContent = `Try ${attempts}`;
+        attempt.textContent = `Trial ${trialNumber}`;
 
         const details = document.createElement('div');
         details.className = 'history-details';
 
-        const guessText = document.createElement('span');
-        guessText.className = 'history-guess';
-        guessText.textContent = `Entered ${guess}`;
+        const summary = document.createElement('span');
+        summary.className = 'history-guess';
+        summary.textContent = `Cell ${trial.position + 1} · ${trial.letter}`;
 
         const result = document.createElement('span');
         result.className = 'history-result';
-        if (outcome === 'correct') {
+        result.textContent = `Position ${expected.positionMatch ? 'match' : 'new'} (${decision.position ? 'mark' : 'pass'}), letter ${expected.soundMatch ? 'match' : 'new'} (${decision.sound ? 'mark' : 'pass'})`;
+        if (correctness.position && correctness.sound) {
           result.classList.add('history-result--correct');
-          result.textContent = 'Bullseye';
-        } else if (outcome === 'low') {
-          result.classList.add('history-result--low');
-          result.textContent = 'Aim higher';
         } else {
-          result.classList.add('history-result--high');
-          result.textContent = 'Aim lower';
+          result.classList.add('history-result--low');
         }
 
-        details.append(guessText, result);
+        details.append(summary, result);
         item.append(attempt, details);
         elements.historyList.append(item);
       }
 
-      function startRound() {
-        secretNumber = Math.floor(Math.random() * (DEFAULT_RANGE.max - DEFAULT_RANGE.min + 1)) + DEFAULT_RANGE.min;
-        attempts = 0;
-        range = { ...DEFAULT_RANGE };
-        roundActive = true;
-        resetHistory();
-        setRangeDisplay();
-        updateAttempts();
-        setStatus('Guess a number between 1 and 100 to log your first try.');
-        if (elements.input) {
-          elements.input.disabled = false;
-          elements.input.value = '';
-          elements.input.focus();
+      function generateTrial() {
+        const position = Math.floor(Math.random() * GRID_SIZE * GRID_SIZE);
+        const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+        return { position, letter };
+      }
+
+      function evaluateCurrentTrial() {
+        const trial = sequence[trialIndex];
+        const referenceIndex = trialIndex - level;
+        let positionMatch = false;
+        let soundMatch = false;
+        if (referenceIndex >= 0) {
+          const reference = sequence[referenceIndex];
+          positionMatch = reference.position === trial.position;
+          soundMatch = reference.letter === trial.letter;
         }
-        if (elements.submit) {
-          elements.submit.disabled = false;
+
+        const positionCorrect = positionMatch === response.position;
+        const soundCorrect = soundMatch === response.sound;
+
+        totalDecisions += 2;
+        if (positionCorrect) {
+          correctDecisions += 1;
         }
-        if (elements.start) {
-          elements.start.textContent = 'Restart round';
+        if (soundCorrect) {
+          correctDecisions += 1;
         }
+
+        appendHistory(
+          trialIndex + 1,
+          trial,
+          { positionMatch, soundMatch },
+          { ...response },
+          { position: positionCorrect, sound: soundCorrect }
+        );
+      }
+
+      function stopTimer() {
+        if (trialTimer) {
+          window.clearTimeout(trialTimer);
+          trialTimer = null;
+        }
+      }
+
+      function scheduleNextTrial() {
+        stopTimer();
+        trialTimer = window.setTimeout(() => {
+          if (!roundActive) {
+            return;
+          }
+          awaitingInput = false;
+          setButtonsEnabled(false);
+          evaluateCurrentTrial();
+          clearHighlight();
+          if (trialIndex + 1 >= TOTAL_TRIALS) {
+            completeRound();
+          } else {
+            startNextTrial();
+          }
+        }, TRIAL_DURATION);
+      }
+
+      function startNextTrial() {
+        trialIndex += 1;
+        sequence[trialIndex] = generateTrial();
+        resetButtons();
+        highlightCell(sequence[trialIndex].position);
+        setLetterDisplay(sequence[trialIndex].letter);
+        updateProgress();
+        awaitingInput = true;
+        setButtonsEnabled(true);
+        scheduleNextTrial();
       }
 
       function completeRound() {
+        stopTimer();
         roundActive = false;
-        if (elements.input) {
-          elements.input.disabled = true;
+        awaitingInput = false;
+        setButtonsEnabled(false);
+        clearHighlight();
+        setLetterDisplay('—');
+        updateProgress();
+
+        const playedLevel = level;
+        const accuracy = totalDecisions === 0
+          ? 0
+          : Math.round((correctDecisions / totalDecisions) * 100);
+
+        const summary = `Round complete: ${accuracy}% accuracy on ${playedLevel}-back.`;
+
+        recordSession({
+          score: accuracy,
+          label: `${accuracy}% accuracy`,
+          summary: `Tracked ${TOTAL_TRIALS} dual cues at ${accuracy}% accuracy (level ${playedLevel})`,
+          extra: {
+            accuracy,
+            totalDecisions,
+            correctDecisions,
+            level: playedLevel
+          }
+        });
+
+        let difficultyNote = '';
+        let nextLevel = playedLevel;
+        if (accuracy >= 80 && playedLevel < MAX_DIFFICULTY) {
+          nextLevel = playedLevel + 1;
+          difficultyNote = ` Advancing to ${nextLevel}-back next round.`;
+        } else if (accuracy < 55 && playedLevel > INITIAL_DIFFICULTY) {
+          nextLevel = playedLevel - 1;
+          difficultyNote = ` Stepping back to ${nextLevel}-back to reinforce consistency.`;
         }
-        if (elements.submit) {
-          elements.submit.disabled = true;
+
+        if (nextLevel !== playedLevel && typeof updateDifficulty === 'function') {
+          const persisted = updateDifficulty(nextLevel);
+          if (typeof persisted === 'number') {
+            nextLevel = persisted;
+          }
         }
+
+        level = nextLevel;
+        setDifficultyDisplay(level);
+        setStatus(summary + difficultyNote);
+
         if (elements.start) {
-          elements.start.textContent = 'Start another round';
+          elements.start.disabled = false;
+          elements.start.textContent = 'Start next round';
           elements.start.focus();
         }
-        setStatus(`Bullseye! You solved it in ${formatTries(attempts)}.`);
-        recordSession({
-          score: attempts,
-          label: formatTries(attempts),
-          summary: `Solved the number line in ${formatTries(attempts)}`,
-          extra: { attempts }
-        });
       }
 
-      function handleSubmit(event) {
-        event.preventDefault();
-        if (!roundActive) {
-          setStatus('Press "Start round" to begin a new attempt.');
-          return;
-        }
-        if (!elements.input) {
-          return;
-        }
-        const rawValue = elements.input.value.trim();
-        if (rawValue.length === 0) {
-          setStatus('Enter a number between 1 and 100 to log a try.');
-          elements.input.focus();
-          return;
-        }
-        const guess = Number(rawValue);
-        if (!Number.isInteger(guess)) {
-          setStatus('Tries must be whole numbers.');
-          elements.input.focus();
-          return;
-        }
-        if (guess < DEFAULT_RANGE.min || guess > DEFAULT_RANGE.max) {
-          setStatus('Stay within the hint range: choose a number from 1 to 100.');
-          elements.input.focus();
-          return;
-        }
-
-        attempts += 1;
-        updateAttempts();
-
-        if (guess === secretNumber) {
-          appendHistory(guess, 'correct');
-          completeRound();
-          return;
-        }
-
-        if (guess < secretNumber) {
-          range.min = Math.max(range.min, guess + 1);
-          appendHistory(guess, 'low');
-          setStatus(`Too low. Aim between ${range.min} and ${range.max}.`);
-        } else {
-          range.max = Math.min(range.max, guess - 1);
-          appendHistory(guess, 'high');
-          setStatus(`Too high. Aim between ${range.min} and ${range.max}.`);
-        }
-
-        setRangeDisplay();
-        elements.input.value = '';
-        elements.input.focus();
+      function resetState() {
+        stopTimer();
+        roundActive = false;
+        awaitingInput = false;
+        trialIndex = -1;
+        sequence = [];
+        correctDecisions = 0;
+        totalDecisions = 0;
+        resetButtons();
+        setButtonsEnabled(false);
+        clearHighlight();
+        setLetterDisplay('—');
+        updateProgress();
       }
 
-      const startListener = () => startRound();
-      const submitListener = (event) => handleSubmit(event);
+      function startRound() {
+        if (roundActive) {
+          return;
+        }
+        const levelFromStore = typeof getDifficulty === 'function' ? Number(getDifficulty()) : level;
+        if (Number.isFinite(levelFromStore) && levelFromStore >= 1) {
+          level = Math.min(MAX_DIFFICULTY, Math.max(INITIAL_DIFFICULTY, Math.round(levelFromStore)));
+        }
 
-      elements.start?.addEventListener('click', startListener);
-      elements.form?.addEventListener('submit', submitListener);
+        resetState();
+        clearHistory();
+        setDifficultyDisplay(level);
+        setStatus(`Mark matches from ${level} step${level === 1 ? '' : 's'} back.`);
+        if (elements.start) {
+          elements.start.disabled = true;
+          elements.start.textContent = 'Training…';
+        }
+
+        roundActive = true;
+        startNextTrial();
+      }
+
+      function toggleResponse(type) {
+        if (!awaitingInput) {
+          return;
+        }
+        if (type === 'position') {
+          response.position = !response.position;
+          setMatchButtonState(elements.positionBtn, response.position);
+        } else if (type === 'sound') {
+          response.sound = !response.sound;
+          setMatchButtonState(elements.soundBtn, response.sound);
+        }
+      }
+
+      const handleStart = () => startRound();
+      const handlePosition = () => toggleResponse('position');
+      const handleSound = () => toggleResponse('sound');
+
+      elements.start?.addEventListener('click', handleStart);
+      elements.positionBtn?.addEventListener('click', handlePosition);
+      elements.soundBtn?.addEventListener('click', handleSound);
+
+      setDifficultyDisplay(level);
+      resetButtons();
+      setButtonsEnabled(false);
+      setLetterDisplay('—');
+      updateProgress();
 
       return {
         destroy() {
-          elements.start?.removeEventListener('click', startListener);
-          elements.form?.removeEventListener('submit', submitListener);
+          stopTimer();
+          elements.start?.removeEventListener('click', handleStart);
+          elements.positionBtn?.removeEventListener('click', handlePosition);
+          elements.soundBtn?.removeEventListener('click', handleSound);
         }
       };
     }
   };
 }
 
-function createSpeedMathExercise() {
-  const TOTAL_QUESTIONS = 5;
+function createStroopFocusExercise() {
+  const COLOR_POOL = [
+    { name: 'Red', value: '#d94141' },
+    { name: 'Blue', value: '#2c7be5' },
+    { name: 'Green', value: '#28a745' },
+    { name: 'Yellow', value: '#f6c343' },
+    { name: 'Purple', value: '#9b51e0' },
+    { name: 'Orange', value: '#f2994a' }
+  ];
+  const LEVELS = [
+    { colours: 4, prompts: 10, limit: 4500 },
+    { colours: 5, prompts: 12, limit: 3800 },
+    { colours: 6, prompts: 14, limit: 3200 },
+    { colours: 6, prompts: 16, limit: 2600 }
+  ];
+  const INITIAL_LEVEL = 1;
 
   return {
-    id: 'speed-math',
-    name: 'Speed Sum Sprint',
-    shortName: 'Speed sums',
-    icon: '⚡️',
-    tagline: 'Answer a burst of addition and subtraction prompts faster each round.',
+    id: 'stroop-focus',
+    name: 'Stroop Focus Lab',
+    shortName: 'Stroop focus',
+    icon: '🎨',
+    tagline: 'Select the ink colour while ignoring the word to sharpen cognitive control.',
     highlights: [
-      'Five quick equations test your mental arithmetic under light pressure.',
-      'Corrections are counted, so aim for accuracy and speed.',
-      'The chart tracks how your completion time improves across sessions.'
+      'Tap the button that matches the ink colour—not the word you read.',
+      'As accuracy stays high the palette grows and the rhythm speeds up.',
+      'Review each cue to spot where interference tripped you up.'
     ],
     measurement: {
-      better: 'lower',
-      chartLabel: 'Completion time (sec)',
-      intro: 'Complete five equations as quickly as possible. Lower times signal faster processing.'
+      better: 'higher',
+      chartLabel: 'Accuracy (%)',
+      intro: 'High accuracy with swift responses indicates improved interference control.'
     },
-    mount({ container, recordSession }) {
+    initialDifficulty: INITIAL_LEVEL,
+    mount({ container, recordSession, getDifficulty, updateDifficulty }) {
       if (!container) {
         return {};
       }
 
       container.innerHTML = `
-        <div class="speed-math-module">
-          <button class="button primary" id="math-start" type="button">Start sprint</button>
-          <p class="game-status" id="math-status">Warm up your mental arithmetic, then tap start.</p>
-          <form class="form" id="math-form" novalidate>
-            <label class="form-field" for="math-input">Current prompt</label>
-            <div class="form-controls">
-              <input id="math-input" name="answer" type="number" inputmode="numeric" autocomplete="off" placeholder="Type the answer" required disabled />
-              <button class="button primary" id="math-submit" type="submit" disabled>Submit</button>
-            </div>
-          </form>
+        <div class="stroop-module">
+          <div class="module-bar">
+            <button class="button primary" id="stroop-start" type="button">Begin sequence</button>
+            <span class="difficulty-pill" id="stroop-difficulty">Level 1</span>
+          </div>
+          <p class="game-status" id="stroop-status">Focus on the ink colour, not the word itself.</p>
+          <div class="stroop-display" aria-live="polite">
+            <span class="stroop-word" id="stroop-word">—</span>
+          </div>
+          <p class="stroop-progress" id="stroop-progress">0 / 0</p>
+          <div class="stroop-options" id="stroop-options" role="group" aria-label="Select the ink colour"></div>
           <div class="history">
             <div class="history-header">
-              <h3>Equation log</h3>
-              <span class="attempt-count" id="math-progress">0 / ${TOTAL_QUESTIONS}</span>
+              <h3>Colour log</h3>
+              <span class="attempt-count" id="stroop-count">0 prompts</span>
             </div>
-            <p class="history-empty" id="math-empty">Your solutions will appear here.</p>
-            <ol class="history-list" id="math-history" aria-live="polite"></ol>
+            <p class="history-empty" id="stroop-empty">Your choices will appear after each cue.</p>
+            <ol class="history-list" id="stroop-history" aria-live="polite"></ol>
           </div>
         </div>
       `;
 
       const elements = {
-        start: container.querySelector('#math-start'),
-        status: container.querySelector('#math-status'),
-        form: container.querySelector('#math-form'),
-        input: container.querySelector('#math-input'),
-        submit: container.querySelector('#math-submit'),
-        progress: container.querySelector('#math-progress'),
-        historyEmpty: container.querySelector('#math-empty'),
-        historyList: container.querySelector('#math-history')
+        start: container.querySelector('#stroop-start'),
+        difficulty: container.querySelector('#stroop-difficulty'),
+        status: container.querySelector('#stroop-status'),
+        word: container.querySelector('#stroop-word'),
+        progress: container.querySelector('#stroop-progress'),
+        options: container.querySelector('#stroop-options'),
+        count: container.querySelector('#stroop-count'),
+        historyEmpty: container.querySelector('#stroop-empty'),
+        historyList: container.querySelector('#stroop-history')
       };
 
-      let questions = [];
-      let index = 0;
-      let mistakes = 0;
-      let questionMistakes = 0;
-      let roundActive = false;
-      let startedAt = 0;
-
-      function generateQuestion() {
-        const first = Math.floor(Math.random() * 20) + 5;
-        const second = Math.floor(Math.random() * 12) + 1;
-        const useSubtraction = Math.random() < 0.4;
-        if (useSubtraction) {
-          const minuend = Math.max(first, second + 4);
-          const subtrahend = Math.floor(Math.random() * (Math.min(minuend, 18) - 3)) + 3;
-          return {
-            prompt: `${minuend} − ${subtrahend}`,
-            answer: minuend - subtrahend
-          };
+      let level = INITIAL_LEVEL;
+      if (typeof getDifficulty === 'function') {
+        const stored = Number(getDifficulty());
+        if (Number.isFinite(stored) && stored >= 1) {
+          level = stored;
         }
-        return {
-          prompt: `${first} + ${second}`,
-          answer: first + second
-        };
       }
 
-      function buildQuestions() {
-        const set = [];
-        while (set.length < TOTAL_QUESTIONS) {
-          set.push(generateQuestion());
+      let prompts = [];
+      let promptIndex = 0;
+      let roundActive = false;
+      let awaitingResponse = false;
+      let promptTimer = null;
+      let responseTimes = [];
+      let correctCount = 0;
+      let timeoutCount = 0;
+      let currentSettings = LEVELS[0];
+      let promptStartedAt = 0;
+
+      function clampLevel(raw) {
+        return Math.max(1, Math.min(LEVELS.length, Math.round(raw)));
+      }
+
+      function resolveSettings(currentLevel) {
+        return LEVELS[Math.min(LEVELS.length - 1, Math.max(0, currentLevel - 1))];
+      }
+
+      function setDifficultyDisplay(currentLevel) {
+        if (elements.difficulty) {
+          elements.difficulty.textContent = `Level ${currentLevel}`;
         }
-        return set;
       }
 
       function setStatus(message) {
@@ -933,13 +1154,16 @@ function createSpeedMathExercise() {
         }
       }
 
-      function updateProgress() {
+      function setProgress(value, total) {
         if (elements.progress) {
-          elements.progress.textContent = `${index} / ${TOTAL_QUESTIONS}`;
+          elements.progress.textContent = `${value} / ${total}`;
+        }
+        if (elements.count) {
+          elements.count.textContent = `${total} ${total === 1 ? 'prompt' : 'prompts'}`;
         }
       }
 
-      function resetHistory() {
+      function clearHistory() {
         if (elements.historyList) {
           elements.historyList.innerHTML = '';
         }
@@ -948,7 +1172,464 @@ function createSpeedMathExercise() {
         }
       }
 
-      function appendHistory(question, adjustmentCount) {
+      function renderColourButtons(activeColours) {
+        if (!elements.options) {
+          return;
+        }
+        elements.options.innerHTML = '';
+        activeColours.forEach((colour) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'button subtle stroop-option';
+          button.textContent = colour.name;
+          button.dataset.colourName = colour.name;
+          button.disabled = true;
+          button.addEventListener('click', () => handleResponse(colour));
+          elements.options.append(button);
+        });
+      }
+
+      function buildPrompts(colourSet, total) {
+        const list = [];
+        for (let i = 0; i < total; i += 1) {
+          const word = colourSet[Math.floor(Math.random() * colourSet.length)];
+          let ink = colourSet[Math.floor(Math.random() * colourSet.length)];
+          if (ink.name === word.name) {
+            ink = colourSet[(colourSet.indexOf(ink) + 1) % colourSet.length];
+          }
+          list.push({ word, ink });
+        }
+        return list;
+      }
+
+      function stopTimer() {
+        if (promptTimer) {
+          window.clearTimeout(promptTimer);
+          promptTimer = null;
+        }
+      }
+
+      function updateWordDisplay(text, colour) {
+        if (elements.word) {
+          elements.word.textContent = text;
+          elements.word.style.color = colour || 'inherit';
+        }
+      }
+
+      function setOptionsEnabled(enabled) {
+        elements.options?.querySelectorAll('button').forEach((button) => {
+          button.disabled = !enabled;
+        });
+      }
+
+      function appendHistoryEntry(index, prompt, selection, correct, elapsedMs) {
+        if (!elements.historyList || !elements.historyEmpty) {
+          return;
+        }
+        elements.historyEmpty.hidden = true;
+        const item = document.createElement('li');
+        item.className = 'history-item';
+
+        const attempt = document.createElement('span');
+        attempt.className = 'history-attempt';
+        attempt.textContent = `Cue ${index}`;
+
+        const details = document.createElement('div');
+        details.className = 'history-details';
+
+        const summary = document.createElement('span');
+        summary.className = 'history-guess';
+        summary.textContent = `${prompt.word.name} in ${prompt.ink.name}`;
+
+        const result = document.createElement('span');
+        result.className = 'history-result';
+        if (selection) {
+          result.textContent = `Answered ${selection} • ${formatSeconds(elapsedMs / 1000)}`;
+          result.classList.add(correct ? 'history-result--correct' : 'history-result--low');
+        } else {
+          result.textContent = 'No response logged';
+          result.classList.add('history-result--low');
+        }
+
+        details.append(summary, result);
+        item.append(attempt, details);
+        elements.historyList.append(item);
+      }
+
+      function advancePrompt() {
+        if (promptIndex >= prompts.length) {
+          completeRound();
+          return;
+        }
+        const prompt = prompts[promptIndex];
+        updateWordDisplay(prompt.word.name.toUpperCase(), prompt.ink.value);
+        setProgress(promptIndex + 1, prompts.length);
+        awaitingResponse = true;
+        setOptionsEnabled(true);
+        promptStartedAt = performance.now ? performance.now() : Date.now();
+        stopTimer();
+        promptTimer = window.setTimeout(() => handleTimeout(), currentSettings.limit);
+      }
+
+      function handleResponse(colour) {
+        if (!roundActive || !awaitingResponse) {
+          return;
+        }
+        awaitingResponse = false;
+        setOptionsEnabled(false);
+        stopTimer();
+
+        const prompt = prompts[promptIndex];
+        const now = performance.now ? performance.now() : Date.now();
+        const elapsed = Math.max(0, now - promptStartedAt);
+        responseTimes.push(elapsed);
+
+        const isCorrect = colour.name === prompt.ink.name;
+        if (isCorrect) {
+          correctCount += 1;
+        }
+
+        appendHistoryEntry(promptIndex + 1, prompt, colour.name, isCorrect, elapsed);
+
+        promptIndex += 1;
+        if (promptIndex >= prompts.length) {
+          completeRound();
+        } else {
+          advancePrompt();
+        }
+      }
+
+      function handleTimeout() {
+        if (!roundActive || !awaitingResponse) {
+          return;
+        }
+        awaitingResponse = false;
+        setOptionsEnabled(false);
+        stopTimer();
+        timeoutCount += 1;
+        const prompt = prompts[promptIndex];
+        appendHistoryEntry(promptIndex + 1, prompt, null, false, currentSettings.limit);
+        promptIndex += 1;
+        advancePrompt();
+      }
+
+      function completeRound() {
+        stopTimer();
+        roundActive = false;
+        awaitingResponse = false;
+        setOptionsEnabled(false);
+        updateWordDisplay('—');
+
+        const playedLevel = level;
+        const total = prompts.length;
+        const accuracy = total === 0 ? 0 : Math.round((correctCount / total) * 100);
+        const totalMs = responseTimes.reduce((sum, value) => sum + value, 0) + timeoutCount * currentSettings.limit;
+        const averageMs = total === 0 ? 0 : totalMs / total;
+        const averageLabel = formatSeconds(averageMs / 1000);
+
+        recordSession({
+          score: accuracy,
+          label: `${accuracy}% accuracy • ${averageLabel}`,
+          summary: `Identified ${total} colour cues with ${accuracy}% accuracy (${averageLabel} average response, level ${playedLevel})`,
+          extra: {
+            accuracy,
+            averageMs,
+            level: playedLevel,
+            total,
+            correct: correctCount,
+            timeouts: timeoutCount
+          }
+        });
+
+        let nextLevel = playedLevel;
+        let difficultyNote = '';
+        if (accuracy >= 85 && averageMs <= currentSettings.limit * 0.65 && playedLevel < LEVELS.length) {
+          nextLevel = playedLevel + 1;
+          difficultyNote = ` Palette expanding to level ${nextLevel} next time.`;
+        } else if (accuracy < 70 && playedLevel > INITIAL_LEVEL) {
+          nextLevel = playedLevel - 1;
+          difficultyNote = ` Stepping back to level ${nextLevel} to reinforce accuracy.`;
+        }
+
+        if (nextLevel !== playedLevel && typeof updateDifficulty === 'function') {
+          const persisted = updateDifficulty(nextLevel);
+          if (typeof persisted === 'number') {
+            nextLevel = persisted;
+          }
+        }
+
+        level = clampLevel(nextLevel);
+        currentSettings = resolveSettings(level);
+        setDifficultyDisplay(level);
+        setStatus(`Sequence complete at ${accuracy}% accuracy (${averageLabel}).${difficultyNote}`);
+
+        if (elements.start) {
+          elements.start.disabled = false;
+          elements.start.textContent = 'Run it again';
+          elements.start.focus();
+        }
+      }
+
+      function startRound() {
+        if (roundActive) {
+          return;
+        }
+        const storedLevel = typeof getDifficulty === 'function' ? Number(getDifficulty()) : level;
+        if (Number.isFinite(storedLevel)) {
+          level = clampLevel(storedLevel);
+        }
+
+        currentSettings = resolveSettings(level);
+        prompts = buildPrompts(COLOR_POOL.slice(0, currentSettings.colours), currentSettings.prompts);
+        promptIndex = 0;
+        responseTimes = [];
+        correctCount = 0;
+        timeoutCount = 0;
+        clearHistory();
+        setDifficultyDisplay(level);
+        updateWordDisplay('—');
+        setProgress(0, prompts.length);
+        setStatus('Tap the ink colour as quickly and accurately as you can.');
+        renderColourButtons(COLOR_POOL.slice(0, currentSettings.colours));
+        setOptionsEnabled(false);
+
+        if (elements.start) {
+          elements.start.disabled = true;
+          elements.start.textContent = 'In progress…';
+        }
+
+        roundActive = true;
+        advancePrompt();
+      }
+
+      const handleStart = () => startRound();
+
+      elements.start?.addEventListener('click', handleStart);
+      setDifficultyDisplay(level);
+      setProgress(0, 0);
+      updateWordDisplay('—');
+
+      return {
+        destroy() {
+          stopTimer();
+          elements.start?.removeEventListener('click', handleStart);
+        }
+      };
+    }
+  };
+}
+
+function createTaskSwitchCircuit() {
+  const LETTERS = ['A', 'E', 'I', 'O', 'U', 'B', 'C', 'D', 'F', 'G', 'H', 'L', 'M', 'N', 'R', 'S', 'T'];
+  const NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const LEVELS = [
+    { prompts: 12, limit: 4200, switchProbability: 0.45 },
+    { prompts: 16, limit: 3500, switchProbability: 0.55 },
+    { prompts: 20, limit: 3000, switchProbability: 0.65 },
+    { prompts: 24, limit: 2600, switchProbability: 0.75 }
+  ];
+  const INITIAL_LEVEL = 1;
+
+  const TASKS = {
+    letter: {
+      label: 'Letter rule',
+      prompt: 'Is the letter a vowel?',
+      left: 'Vowel',
+      right: 'Consonant',
+      evaluate(value) {
+        const vowels = new Set(['A', 'E', 'I', 'O', 'U']);
+        return vowels.has(value);
+      }
+    },
+    number: {
+      label: 'Number rule',
+      prompt: 'Is the number odd?',
+      left: 'Odd',
+      right: 'Even',
+      evaluate(value) {
+        return value % 2 === 1;
+      }
+    }
+  };
+
+  return {
+    id: 'task-switch',
+    name: 'Task Switch Circuit',
+    shortName: 'Task switch',
+    icon: '🔀',
+    tagline: 'Shift between vowel and parity checks to build cognitive flexibility.',
+    highlights: [
+      'Rules shift throughout the circuit—watch the banner before you answer.',
+      'High accuracy and quick reactions unlock longer, faster circuits.',
+      'Session history shows where rule switches caused slips.'
+    ],
+    measurement: {
+      better: 'higher',
+      chartLabel: 'Accuracy (%)',
+      intro: 'Stay accurate while the active rule changes. Higher percentages reflect stronger task switching.'
+    },
+    initialDifficulty: INITIAL_LEVEL,
+    mount({ container, recordSession, getDifficulty, updateDifficulty }) {
+      if (!container) {
+        return {};
+      }
+
+      container.innerHTML = `
+        <div class="task-switch-module">
+          <div class="module-bar">
+            <button class="button primary" id="switch-start" type="button">Start circuit</button>
+            <span class="difficulty-pill" id="switch-difficulty">Level 1</span>
+          </div>
+          <p class="game-status" id="switch-status">Watch the active rule, then respond.</p>
+          <div class="task-switch-display" aria-live="polite">
+            <span class="task-switch-rule" id="switch-rule">Rule ready</span>
+            <span class="task-switch-prompt" id="switch-prompt">—</span>
+          </div>
+          <p class="task-switch-progress" id="switch-progress">0 / 0</p>
+          <div class="task-switch-controls" role="group" aria-label="Task switch responses">
+            <button class="button subtle" id="switch-left" type="button" disabled>Vowel</button>
+            <button class="button subtle" id="switch-right" type="button" disabled>Consonant</button>
+          </div>
+          <div class="history">
+            <div class="history-header">
+              <h3>Switch log</h3>
+              <span class="attempt-count" id="switch-count">0 prompts</span>
+            </div>
+            <p class="history-empty" id="switch-empty">Prompts and responses will appear here.</p>
+            <ol class="history-list" id="switch-history" aria-live="polite"></ol>
+          </div>
+        </div>
+      `;
+
+      const elements = {
+        start: container.querySelector('#switch-start'),
+        difficulty: container.querySelector('#switch-difficulty'),
+        status: container.querySelector('#switch-status'),
+        rule: container.querySelector('#switch-rule'),
+        prompt: container.querySelector('#switch-prompt'),
+        progress: container.querySelector('#switch-progress'),
+        left: container.querySelector('#switch-left'),
+        right: container.querySelector('#switch-right'),
+        count: container.querySelector('#switch-count'),
+        historyEmpty: container.querySelector('#switch-empty'),
+        historyList: container.querySelector('#switch-history')
+      };
+
+      let level = INITIAL_LEVEL;
+      if (typeof getDifficulty === 'function') {
+        const stored = Number(getDifficulty());
+        if (Number.isFinite(stored) && stored >= 1) {
+          level = stored;
+        }
+      }
+
+      let prompts = [];
+      let promptIndex = 0;
+      let roundActive = false;
+      let awaitingResponse = false;
+      let currentSettings = LEVELS[0];
+      let promptTimer = null;
+      let promptStartedAt = 0;
+      let responseTimes = [];
+      let correctCount = 0;
+      let timeoutCount = 0;
+
+      function clampLevel(raw) {
+        return Math.max(1, Math.min(LEVELS.length, Math.round(raw)));
+      }
+
+      function resolveSettings(currentLevel) {
+        return LEVELS[Math.min(LEVELS.length - 1, Math.max(0, currentLevel - 1))];
+      }
+
+      function setDifficultyDisplay(currentLevel) {
+        if (elements.difficulty) {
+          elements.difficulty.textContent = `Level ${currentLevel}`;
+        }
+      }
+
+      function setStatus(message) {
+        if (elements.status) {
+          elements.status.textContent = message;
+        }
+      }
+
+      function setProgress(value, total) {
+        if (elements.progress) {
+          elements.progress.textContent = `${value} / ${total}`;
+        }
+        if (elements.count) {
+          elements.count.textContent = `${total} ${total === 1 ? 'prompt' : 'prompts'}`;
+        }
+      }
+
+      function clearHistory() {
+        if (elements.historyList) {
+          elements.historyList.innerHTML = '';
+        }
+        if (elements.historyEmpty) {
+          elements.historyEmpty.hidden = false;
+        }
+      }
+
+      function setControlsEnabled(enabled) {
+        if (elements.left) {
+          elements.left.disabled = !enabled;
+        }
+        if (elements.right) {
+          elements.right.disabled = !enabled;
+        }
+      }
+
+      function updateRuleDisplay(task) {
+        const taskMeta = TASKS[task];
+        if (!taskMeta) {
+          return;
+        }
+        if (elements.rule) {
+          elements.rule.textContent = taskMeta.label;
+        }
+        if (elements.status) {
+          elements.status.textContent = taskMeta.prompt;
+        }
+        if (elements.left) {
+          elements.left.textContent = taskMeta.left;
+        }
+        if (elements.right) {
+          elements.right.textContent = taskMeta.right;
+        }
+      }
+
+      function updatePromptDisplay(text) {
+        if (elements.prompt) {
+          elements.prompt.textContent = text;
+        }
+      }
+
+      function stopTimer() {
+        if (promptTimer) {
+          window.clearTimeout(promptTimer);
+          promptTimer = null;
+        }
+      }
+
+      function buildPrompts(total, settings) {
+        const list = [];
+        let previousTask = null;
+        for (let i = 0; i < total; i += 1) {
+          let task = previousTask;
+          if (!task || Math.random() < settings.switchProbability) {
+            task = Math.random() < 0.5 ? 'letter' : 'number';
+          }
+          const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+          const number = NUMBERS[Math.floor(Math.random() * NUMBERS.length)];
+          list.push({ task, letter, number });
+          previousTask = task;
+        }
+        return list;
+      }
+
+      function appendHistoryEntry(index, prompt, selection, correct, elapsedMs, timedOut) {
         if (!elements.historyList || !elements.historyEmpty) {
           return;
         }
@@ -963,390 +1644,193 @@ function createSpeedMathExercise() {
         const details = document.createElement('div');
         details.className = 'history-details';
 
-        const prompt = document.createElement('span');
-        prompt.className = 'history-guess';
-        prompt.textContent = `${question.prompt} = ${question.answer}`;
+        const summary = document.createElement('span');
+        summary.className = 'history-guess';
+        summary.textContent = `${prompt.letter}${prompt.number} (${TASKS[prompt.task].label})`;
 
         const result = document.createElement('span');
         result.className = 'history-result';
-        if (adjustmentCount === 0) {
-          result.textContent = 'Clean solve';
+        if (timedOut) {
+          result.textContent = 'No response';
+          result.classList.add('history-result--low');
         } else {
-          result.textContent = `${adjustmentCount} ${pluralize(adjustmentCount, 'correction')}`;
+          result.textContent = `Answered ${selection} • ${formatSeconds(elapsedMs / 1000)}`;
+          result.classList.add(correct ? 'history-result--correct' : 'history-result--low');
         }
 
-        details.append(prompt, result);
+        details.append(summary, result);
         item.append(attempt, details);
         elements.historyList.append(item);
       }
 
-      function startRound() {
-        questions = buildQuestions();
-        index = 0;
-        mistakes = 0;
-        questionMistakes = 0;
-        roundActive = true;
-        startedAt = performance.now ? performance.now() : Date.now();
-        resetHistory();
-        updateProgress();
-        setStatus('Solve each prompt as quickly as you can.');
-        if (elements.input) {
-          elements.input.disabled = false;
-          elements.input.value = '';
-        }
-        if (elements.submit) {
-          elements.submit.disabled = false;
-        }
-        if (elements.start) {
-          elements.start.textContent = 'Restart sprint';
-        }
-        focusInput();
-        showCurrentPrompt();
-      }
-
-      function focusInput() {
-        window.requestAnimationFrame(() => {
-          elements.input?.focus();
-        });
-      }
-
-      function showCurrentPrompt() {
-        if (!elements.form) {
+      function handleResponse(choice) {
+        if (!roundActive || !awaitingResponse) {
           return;
         }
-        const question = questions[index];
-        if (!question) {
+        awaitingResponse = false;
+        setControlsEnabled(false);
+        stopTimer();
+
+        const prompt = prompts[promptIndex];
+        const now = performance.now ? performance.now() : Date.now();
+        const elapsed = Math.max(0, now - promptStartedAt);
+        responseTimes.push(elapsed);
+
+        const taskMeta = TASKS[prompt.task];
+        const correctLeft = taskMeta.evaluate(prompt.task === 'letter' ? prompt.letter : prompt.number);
+        const isLeft = choice === 'left';
+        const isCorrect = isLeft === correctLeft;
+        if (isCorrect) {
+          correctCount += 1;
+        }
+
+        appendHistoryEntry(promptIndex + 1, prompt, choice === 'left' ? taskMeta.left : taskMeta.right, isCorrect, elapsed, false);
+
+        promptIndex += 1;
+        if (promptIndex >= prompts.length) {
+          completeRound();
+        } else {
+          advancePrompt();
+        }
+      }
+
+      function handleTimeout() {
+        if (!roundActive || !awaitingResponse) {
           return;
         }
-        const label = elements.form.querySelector('label[for="math-input"]');
-        if (label) {
-          label.textContent = `Prompt ${index + 1} of ${TOTAL_QUESTIONS}`;
+        awaitingResponse = false;
+        setControlsEnabled(false);
+        stopTimer();
+        timeoutCount += 1;
+        const prompt = prompts[promptIndex];
+        appendHistoryEntry(promptIndex + 1, prompt, null, false, currentSettings.limit, true);
+        promptIndex += 1;
+        advancePrompt();
+      }
+
+      function advancePrompt() {
+        if (promptIndex >= prompts.length) {
+          completeRound();
+          return;
         }
-        setStatus(`What is ${question.prompt}?`);
+        const prompt = prompts[promptIndex];
+        updateRuleDisplay(prompt.task);
+        updatePromptDisplay(`${prompt.letter}${prompt.number}`);
+        setProgress(promptIndex + 1, prompts.length);
+        awaitingResponse = true;
+        setControlsEnabled(true);
+        promptStartedAt = performance.now ? performance.now() : Date.now();
+        stopTimer();
+        promptTimer = window.setTimeout(() => handleTimeout(), currentSettings.limit);
       }
 
       function completeRound() {
+        stopTimer();
         roundActive = false;
-        if (elements.input) {
-          elements.input.disabled = true;
-        }
-        if (elements.submit) {
-          elements.submit.disabled = true;
-        }
-        if (elements.start) {
-          elements.start.textContent = 'Start another sprint';
-          elements.start.focus();
-        }
+        awaitingResponse = false;
+        setControlsEnabled(false);
+        updatePromptDisplay('—');
 
-        const finishedAt = performance.now ? performance.now() : Date.now();
-        const elapsedMs = finishedAt - startedAt;
-        const elapsedSeconds = Math.max(0, elapsedMs / 1000);
-        const label = mistakes === 0
-          ? `${formatSeconds(elapsedSeconds)}`
-          : `${formatSeconds(elapsedSeconds)} • ${mistakes} ${pluralize(mistakes, 'correction')}`;
-
-        setStatus(`Sprint complete in ${formatSeconds(elapsedSeconds)} with ${mistakes} ${pluralize(
-          mistakes,
-          'correction'
-        )}.`);
+        const playedLevel = level;
+        const total = prompts.length;
+        const accuracy = total === 0 ? 0 : Math.round((correctCount / total) * 100);
+        const totalMs = responseTimes.reduce((sum, value) => sum + value, 0) + timeoutCount * currentSettings.limit;
+        const averageMs = total === 0 ? 0 : totalMs / total;
+        const averageLabel = formatSeconds(averageMs / 1000);
 
         recordSession({
-          score: elapsedSeconds,
-          label,
-          summary: `Solved ${TOTAL_QUESTIONS} equations in ${formatSeconds(elapsedSeconds)} (${mistakes} ${pluralize(
-            mistakes,
-            'correction'
-          )})`,
-          extra: { elapsedSeconds, mistakes, total: TOTAL_QUESTIONS }
-        });
-      }
-
-      function handleSubmit(event) {
-        event.preventDefault();
-        if (!roundActive || !elements.input) {
-          setStatus('Tap "Start sprint" to begin.');
-          return;
-        }
-        const raw = elements.input.value.trim();
-        if (raw.length === 0) {
-          setStatus('Enter an answer to keep the sprint moving.');
-          elements.input.focus();
-          return;
-        }
-        const value = Number(raw);
-        if (!Number.isFinite(value)) {
-          setStatus('Answers must be numbers.');
-          elements.input.focus();
-          return;
-        }
-
-        const currentQuestion = questions[index];
-        if (!currentQuestion) {
-          return;
-        }
-
-        if (value === currentQuestion.answer) {
-          index += 1;
-          appendHistory(currentQuestion, questionMistakes);
-          questionMistakes = 0;
-          updateProgress();
-          if (index >= questions.length) {
-            completeRound();
-            return;
+          score: accuracy,
+          label: `${accuracy}% accuracy • ${averageLabel}`,
+          summary: `Navigated ${total} task switches with ${accuracy}% accuracy (${averageLabel} average response, level ${playedLevel})`,
+          extra: {
+            accuracy,
+            averageMs,
+            level: playedLevel,
+            total,
+            correct: correctCount,
+            timeouts: timeoutCount
           }
-          elements.input.value = '';
-          showCurrentPrompt();
-          focusInput();
-        } else {
-          mistakes += 1;
-          questionMistakes += 1;
-          setStatus('Not quite right—adjust and try again.');
-          elements.input.select();
+        });
+
+        let nextLevel = playedLevel;
+        let difficultyNote = '';
+        if (accuracy >= 85 && averageMs <= currentSettings.limit * 0.7 && playedLevel < LEVELS.length) {
+          nextLevel = playedLevel + 1;
+          difficultyNote = ` Level ${nextLevel} unlocked for the next circuit.`;
+        } else if (accuracy < 70 && playedLevel > INITIAL_LEVEL) {
+          nextLevel = playedLevel - 1;
+          difficultyNote = ` Dropping to level ${nextLevel} to rebuild accuracy.`;
         }
-      }
 
-      const startListener = () => startRound();
-      const submitListener = (event) => handleSubmit(event);
-
-      elements.start?.addEventListener('click', startListener);
-      elements.form?.addEventListener('submit', submitListener);
-
-      return {
-        destroy() {
-          elements.start?.removeEventListener('click', startListener);
-          elements.form?.removeEventListener('submit', submitListener);
+        if (nextLevel !== playedLevel && typeof updateDifficulty === 'function') {
+          const persisted = updateDifficulty(nextLevel);
+          if (typeof persisted === 'number') {
+            nextLevel = persisted;
+          }
         }
-      };
-    }
-  };
-}
 
-function createMemoryFlashExercise() {
-  return {
-    id: 'memory-flash',
-    name: 'Memory Flash Recall',
-    shortName: 'Memory flash',
-    icon: '✨',
-    tagline: 'Study a quick number string, let it fade, then reproduce it from memory.',
-    highlights: [
-      'Sequences vary between four and seven digits to keep you adaptable.',
-      'The display hides after a short pause so you can practise recall without cues.',
-      'Accuracy percentages climb when more digits land in the correct position.'
-    ],
-    measurement: {
-      better: 'higher',
-      chartLabel: 'Recall accuracy (%)',
-      intro: 'Recreate the hidden number string. Higher percentages show stronger short-term recall.'
-    },
-    mount({ container, recordSession }) {
-      if (!container) {
-        return {};
-      }
+        level = clampLevel(nextLevel);
+        currentSettings = resolveSettings(level);
+        setDifficultyDisplay(level);
+        setStatus(`Circuit complete at ${accuracy}% accuracy (${averageLabel}).${difficultyNote}`);
 
-      container.innerHTML = `
-        <div class="memory-flash-module">
-          <button class="button primary" id="memory-start" type="button">Show sequence</button>
-          <p class="range-display" id="memory-sequence" aria-live="polite">Press the button to reveal a sequence.</p>
-          <p class="game-status" id="memory-status">You will have a few seconds to study the digits before they vanish.</p>
-          <form class="form" id="memory-form" novalidate>
-            <label class="form-field" for="memory-input">Type the sequence from memory</label>
-            <div class="form-controls">
-              <input id="memory-input" name="memory" type="text" inputmode="numeric" autocomplete="off" placeholder="Enter the digits" disabled required />
-              <button class="button primary" id="memory-submit" type="submit" disabled>Submit</button>
-            </div>
-          </form>
-          <div class="history">
-            <div class="history-header">
-              <h3>Recall summary</h3>
-              <span class="attempt-count" id="memory-length">0 digits</span>
-            </div>
-            <p class="history-empty" id="memory-empty">Complete a recall to see the breakdown.</p>
-            <ol class="history-list" id="memory-history" aria-live="polite"></ol>
-          </div>
-        </div>
-      `;
-
-      const elements = {
-        start: container.querySelector('#memory-start'),
-        sequence: container.querySelector('#memory-sequence'),
-        status: container.querySelector('#memory-status'),
-        form: container.querySelector('#memory-form'),
-        input: container.querySelector('#memory-input'),
-        submit: container.querySelector('#memory-submit'),
-        length: container.querySelector('#memory-length'),
-        historyEmpty: container.querySelector('#memory-empty'),
-        historyList: container.querySelector('#memory-history')
-      };
-
-      let sequence = '';
-      let revealTimeout = null;
-      let accepting = false;
-
-      function clearTimeoutIfNeeded() {
-        if (revealTimeout) {
-          window.clearTimeout(revealTimeout);
-          revealTimeout = null;
-        }
-      }
-
-      function generateSequence() {
-        const length = Math.floor(Math.random() * 4) + 4;
-        const digits = [];
-        for (let i = 0; i < length; i += 1) {
-          digits.push(Math.floor(Math.random() * 9) + 1);
-        }
-        return digits.join('');
-      }
-
-      function setStatus(message) {
-        if (elements.status) {
-          elements.status.textContent = message;
-        }
-      }
-
-      function setLengthDisplay(length) {
-        if (elements.length) {
-          elements.length.textContent = `${length} ${pluralize(length, 'digit')}`;
-        }
-      }
-
-      function resetHistory() {
-        if (elements.historyList) {
-          elements.historyList.innerHTML = '';
-        }
-        if (elements.historyEmpty) {
-          elements.historyEmpty.hidden = false;
+        if (elements.start) {
+          elements.start.disabled = false;
+          elements.start.textContent = 'Run another circuit';
+          elements.start.focus();
         }
       }
 
       function startRound() {
-        clearTimeoutIfNeeded();
-        sequence = generateSequence();
-        setLengthDisplay(sequence.length);
-        accepting = false;
-        resetHistory();
+        if (roundActive) {
+          return;
+        }
+        const storedLevel = typeof getDifficulty === 'function' ? Number(getDifficulty()) : level;
+        if (Number.isFinite(storedLevel)) {
+          level = clampLevel(storedLevel);
+        }
 
-        if (elements.sequence) {
-          elements.sequence.textContent = sequence.split('').join(' ');
-        }
-        setStatus('Memorise the digits before they fade.');
-        if (elements.input) {
-          elements.input.value = '';
-          elements.input.disabled = true;
-        }
-        if (elements.submit) {
-          elements.submit.disabled = true;
-        }
+        currentSettings = resolveSettings(level);
+        prompts = buildPrompts(currentSettings.prompts, currentSettings);
+        promptIndex = 0;
+        responseTimes = [];
+        correctCount = 0;
+        timeoutCount = 0;
+        clearHistory();
+        setDifficultyDisplay(level);
+        setProgress(0, prompts.length);
+        updatePromptDisplay('—');
+        setStatus('Respond using the current rule banner as quickly as you can.');
+        setControlsEnabled(false);
+
         if (elements.start) {
-          elements.start.textContent = 'Show another sequence';
           elements.start.disabled = true;
+          elements.start.textContent = 'Circuit running…';
         }
 
-        const displayDuration = 2200 + sequence.length * 400;
-        revealTimeout = window.setTimeout(() => {
-          if (elements.sequence) {
-            elements.sequence.textContent = 'Sequence hidden. Recreate it from memory.';
-          }
-          setStatus('Type the digits in order, then press submit.');
-          if (elements.input) {
-            elements.input.disabled = false;
-            elements.input.focus();
-          }
-          if (elements.submit) {
-            elements.submit.disabled = false;
-          }
-          accepting = true;
-          if (elements.start) {
-            elements.start.disabled = false;
-          }
-        }, displayDuration);
+        roundActive = true;
+        advancePrompt();
       }
 
-      function appendHistoryEntry(accuracy, correctCount, attempt) {
-        if (!elements.historyList || !elements.historyEmpty) {
-          return;
-        }
-        elements.historyEmpty.hidden = true;
-        const item = document.createElement('li');
-        item.className = 'history-item';
+      const handleStart = () => startRound();
+      const handleLeft = () => handleResponse('left');
+      const handleRight = () => handleResponse('right');
 
-        const heading = document.createElement('span');
-        heading.className = 'history-attempt';
-        heading.textContent = `${accuracy}% accuracy`;
+      elements.start?.addEventListener('click', handleStart);
+      elements.left?.addEventListener('click', handleLeft);
+      elements.right?.addEventListener('click', handleRight);
 
-        const details = document.createElement('div');
-        details.className = 'history-details';
-
-        const target = document.createElement('span');
-        target.className = 'history-guess';
-        target.textContent = `Target: ${sequence}`;
-
-        const result = document.createElement('span');
-        result.className = 'history-result';
-        result.textContent = `You entered: ${attempt || '—'} (${correctCount}/${sequence.length} correct)`;
-
-        details.append(target, result);
-        item.append(heading, details);
-        elements.historyList.append(item);
-      }
-
-      function completeRound(attempt) {
-        accepting = false;
-        if (elements.input) {
-          elements.input.disabled = true;
-        }
-        if (elements.submit) {
-          elements.submit.disabled = true;
-        }
-        if (elements.start) {
-          elements.start.focus();
-        }
-
-        const sanitized = (attempt || '').replace(/\s+/g, '');
-        let correct = 0;
-        for (let i = 0; i < sequence.length; i += 1) {
-          if (sanitized[i] === sequence[i]) {
-            correct += 1;
-          }
-        }
-        const accuracy = sequence.length === 0 ? 0 : Math.round((correct / sequence.length) * 100);
-        setStatus(`Recall scored ${accuracy}% with ${correct} of ${sequence.length} digits in place.`);
-        appendHistoryEntry(accuracy, correct, sanitized);
-
-        recordSession({
-          score: accuracy,
-          label: `${accuracy}% accuracy`,
-          summary: `Recalled ${sequence.length} digits with ${accuracy}% accuracy`,
-          extra: { accuracy, correct, length: sequence.length }
-        });
-      }
-
-      function handleSubmit(event) {
-        event.preventDefault();
-        if (!accepting || !elements.input) {
-          setStatus('Press "Show sequence" to start a round.');
-          return;
-        }
-        const attempt = elements.input.value.trim();
-        if (attempt.length === 0) {
-          setStatus('Enter the digits you remember to log a result.');
-          elements.input.focus();
-          return;
-        }
-        completeRound(attempt);
-      }
-
-      const startListener = () => startRound();
-      const submitListener = (event) => handleSubmit(event);
-
-      elements.start?.addEventListener('click', startListener);
-      elements.form?.addEventListener('submit', submitListener);
+      setDifficultyDisplay(level);
+      setProgress(0, 0);
+      updateRuleDisplay('letter');
+      updatePromptDisplay('—');
 
       return {
         destroy() {
-          clearTimeoutIfNeeded();
-          elements.start?.removeEventListener('click', startListener);
-          elements.form?.removeEventListener('submit', submitListener);
+          stopTimer();
+          elements.start?.removeEventListener('click', handleStart);
+          elements.left?.removeEventListener('click', handleLeft);
+          elements.right?.removeEventListener('click', handleRight);
         }
       };
     }
