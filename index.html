@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Brain Training Lab</title>
+    <title>Synapse Studio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -13,112 +13,98 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body class="brain-training">
-    <main class="shell" aria-label="Brain Training Lab interface">
+    <main class="shell" aria-label="Synapse Studio interface">
       <header class="ds-header">
         <div class="ds-brand" role="presentation">
           <span class="ds-brand__icon" aria-hidden="true">🧠</span>
           <span class="ds-brand__text">
-            <span class="ds-brand__title">Brain Training Lab</span>
-            <span class="ds-brand__subtitle">Guided by Dr. Kawashima</span>
+            <span class="ds-brand__title">Synapse Studio</span>
+            <span class="ds-brand__subtitle">Daily circuits for a sharper mind</span>
           </span>
         </div>
         <span class="status-pill" role="status" aria-live="polite">
           <span class="status-dot" aria-hidden="true"></span>
-          Personal best: <span id="best-pill-value">—</span>
+          Current focus: <span id="status-pill-value">—</span>
         </span>
       </header>
 
       <section class="ds-screen ds-screen--top" aria-labelledby="briefing-title">
         <div class="briefing">
           <p class="eyebrow">Daily briefing</p>
-          <h1 class="briefing__title" id="briefing-title">Warm-up: Number Line Focus</h1>
+          <h1 class="briefing__title" id="briefing-title">Training deck overview</h1>
           <p class="briefing__lede">
-            Sharpen your sense of scale by locating a hidden number between 1 and 100.
-            Listen to the guidance, adjust quickly, and keep your streak alive.
+            Cycle through quick mental circuits to sharpen estimation, arithmetic, and short-term
+            memory. Each session is timestamped so you can watch your trends evolve.
           </p>
           <ul class="briefing__highlights" role="list">
-            <li class="briefing__highlight">Designed for quick daily focus sessions.</li>
-            <li class="briefing__highlight">Progress is stored locally in your training log.</li>
-            <li class="briefing__highlight">Return tomorrow for another check-in.</li>
+            <li class="briefing__highlight">Choose from focused number sense, speed math, and memory drills.</li>
+            <li class="briefing__highlight">Progress stays on this device using private browser storage.</li>
+            <li class="briefing__highlight">Line charts reveal how your performance shifts over time.</li>
           </ul>
+        </div>
+        <div class="daily-overview" aria-label="Daily training summary">
+          <div class="summary-card" id="streak-card">
+            <p class="summary-card__label">Streak</p>
+            <p class="summary-card__value" id="streak-value">0 days</p>
+            <p class="summary-card__hint">Log at least one session per day to grow the streak.</p>
+          </div>
+          <div class="summary-card" id="today-card">
+            <p class="summary-card__label">Today's sessions</p>
+            <p class="summary-card__value" id="today-value">0 logged</p>
+            <p class="summary-card__hint">Your training log tallies every drill you finish.</p>
+          </div>
+          <p class="storage-note">
+            Storage note: all training history is written to your browser's local storage, never to a
+            server.
+          </p>
         </div>
       </section>
 
       <section class="ds-screen ds-screen--bottom" aria-label="Training controls">
         <div class="bottom-grid">
-          <section class="card exercise-card" id="game-card">
-            <div class="card-header">
-              <h2 id="exercise-title">Number Line Warm-up</h2>
-              <button class="button subtle" id="new-game-btn" type="button">Begin session</button>
+          <section class="card exercise-card" id="exercise-card">
+            <div class="exercise-header">
+              <h2 id="exercise-title">Number Line Focus</h2>
+              <nav class="exercise-tabs" id="exercise-tabs" role="tablist" aria-label="Select exercise">
+              </nav>
             </div>
-            <p>
-              A secret number has been tucked along the number line. Use each hint to zero in
-              on the answer with as few tries as possible.
+            <p class="exercise-tagline" id="exercise-tagline">
+              Sharpen your sense of scale by locating a hidden number between 1 and 100.
             </p>
-            <p class="range-display" id="range-display" role="status" aria-live="polite">
-              Hint range: 1 – 100.
-            </p>
-            <p class="game-status" id="status-message" role="status" aria-live="polite">
-              Your warm-up is ready. Enter a number between 1 and 100 to log your first try.
-            </p>
-            <form class="form" id="guess-form" novalidate>
-              <label class="form-field" for="guess-input">Enter your try</label>
-              <div class="form-controls">
-                <input
-                  id="guess-input"
-                  name="guess"
-                  type="number"
-                  min="1"
-                  max="100"
-                  inputmode="numeric"
-                  autocomplete="off"
-                  placeholder="e.g. 42"
-                  required
-                />
-                <button class="button primary" id="guess-button" type="submit">Log try</button>
-              </div>
-            </form>
-            <div class="history">
-              <div class="history-header">
-                <h3>Session log</h3>
-                <span class="attempt-count" id="attempt-count">0 tries</span>
-              </div>
-              <p class="history-empty" id="history-empty">Your tries will appear here.</p>
-              <ol
-                class="history-list"
-                id="guess-history"
-                aria-live="polite"
-                aria-label="Try history"
-              ></ol>
-            </div>
+            <ul class="exercise-highlights" id="exercise-highlights" role="list"></ul>
+            <div class="exercise-body" id="exercise-body"></div>
           </section>
 
           <section class="card stats-card" id="stats-card">
-            <h2>Training logbook</h2>
-            <p>Your progress stays on this device so you can keep a daily streak alive.</p>
+            <h2>Progress logbook</h2>
+            <p id="stats-intro">Select a circuit to inspect its personal best, trend, and recent entries.</p>
             <dl class="stats-grid">
               <div class="stat">
-                <dt>Sharpest run</dt>
+                <dt>Personal best</dt>
                 <dd id="best-score-value">—</dd>
               </div>
               <div class="stat">
-                <dt>Sessions completed</dt>
-                <dd id="games-played-value">0</dd>
+                <dt>Total sessions</dt>
+                <dd id="sessions-count-value">0</dd>
               </div>
               <div class="stat">
                 <dt>Latest result</dt>
                 <dd id="last-score-value">—</dd>
               </div>
             </dl>
-            <button class="button subtle" id="reset-stats-btn" type="button">Clear logbook</button>
-            <div class="tips">
-              <h3>Coach's notes</h3>
-              <ul class="tip-list">
-                <li>Start near the centre of the range to balance your options.</li>
-                <li>Update the hint range after each try to stay focused.</li>
-                <li>Challenge yourself to solve the warm-up in fewer tries each day.</li>
-              </ul>
+            <div class="chart" id="progress-chart"></div>
+            <div class="recent-results">
+              <h3>Recent sessions</h3>
+              <p class="history-empty" id="recent-empty">No sessions logged yet.</p>
+              <ol class="history-list" id="recent-results-list" aria-live="polite"></ol>
             </div>
+            <div class="logbook-actions">
+              <button class="button subtle" id="reset-exercise-btn" type="button">Clear this exercise</button>
+              <button class="button subtle" id="reset-all-btn" type="button">Reset all progress</button>
+            </div>
+            <p class="storage-footnote">
+              These records live only in local storage so you can track growth without creating an account.
+            </p>
           </section>
         </div>
       </section>
