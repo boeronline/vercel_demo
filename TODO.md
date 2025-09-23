@@ -7,7 +7,7 @@
 - [x] Migrate persisted stats to the new identity without losing previous progress.
 
 ## Upcoming
-- [ ] Step 2 – Modular exercise framework.
-- [ ] Step 3 – Daily training loop.
-- [ ] Step 4 – Additional exercises.
+- [x] Step 2 – Modular exercise framework.
+- [x] Step 3 – Daily training loop.
+- [x] Step 4 – Additional exercises.
 - [ ] Step 5 – Coach persona and insights.
