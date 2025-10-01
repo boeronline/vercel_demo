@@ -6,31 +6,179 @@
   box-sizing: border-box;
 }
 
+:root {
+  --trainer-bg: linear-gradient(180deg, #f8f4e9 0%, #e3dcc5 100%);
+  --screen-border: #d0c7b1;
+  --screen-shadow: rgba(63, 63, 63, 0.15);
+  --primary-blue: #3e6694;
+  --accent: #f2a057;
+  --text-color: #2f343f;
+  --soft-text: #5b6270;
+  --panel-bg: rgba(255, 255, 255, 0.72);
+}
+
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-  background: #f5f5f5;
-  color: #333;
+  font-family: "Segoe UI", "Helvetica Neue", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--trainer-bg);
+  color: var(--text-color);
   display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+}
+
+main.trainer {
+  display: grid;
+  gap: 1.5rem;
+  width: min(960px, 100%);
+  grid-template-columns: 1fr;
+}
+
+.screen {
+  background: rgba(255, 255, 255, 0.92);
+  border: 4px solid var(--screen-border);
+  border-radius: 28px;
+  box-shadow: 0 20px 45px var(--screen-shadow);
+  padding: clamp(1.25rem, 4vw, 2.25rem);
+}
+
+.screen.upper {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.screen.lower {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
-.page {
-  max-width: 640px;
-  width: 100%;
-  padding: 3rem 1.5rem;
+.coach-header {
   text-align: center;
 }
 
-h1 {
-  margin-bottom: 1rem;
-  font-size: clamp(2rem, 5vw, 2.5rem);
+.coach-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
 }
 
-p {
+h1 {
   margin: 0;
-  font-size: clamp(1rem, 4vw, 1.125rem);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 700;
+  color: var(--primary-blue);
+}
+
+.coach-intro {
+  margin: 0.75rem auto 0;
+  max-width: 40ch;
   line-height: 1.6;
+  color: var(--soft-text);
+}
+
+.panel-label {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.3rem;
+}
+
+.status-panel,
+.mood-panel {
+  padding: 1rem 1.25rem;
+  background: var(--panel-bg);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.status-panel p,
+.mood-panel p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.mood-label {
+  font-size: clamp(1.75rem, 5vw, 2.2rem);
+  font-weight: 600;
+  color: var(--primary-blue);
+}
+
+.confidence-label {
+  margin-top: 0.3rem;
+  color: var(--soft-text);
+}
+
+button.primary {
+  justify-self: center;
+  padding: 0.85rem 2.5rem;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, var(--primary-blue), #27476d);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(39, 71, 109, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+button.primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(39, 71, 109, 0.28);
+}
+
+button.primary:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.95);
+}
+
+button.primary:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.video-frame {
+  position: relative;
+  width: min(640px, 100%);
+  background: #111;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 6px solid rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.video-frame video,
+.video-frame canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.video-frame canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.video-hint {
+  margin-top: 0.75rem;
+  text-align: center;
+  color: var(--soft-text);
+  font-size: 0.95rem;
+}
+
+@media (min-width: 960px) {
+  main.trainer {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

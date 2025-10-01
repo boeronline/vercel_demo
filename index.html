@@ -3,13 +3,193 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Lege statische site</title>
+    <title>Mood Trainer – gezichtsherkenning</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="page" aria-label="Lege pagina">
-      <h1>Lege statische site</h1>
-      <p>Deze pagina bevat geen dynamische functionaliteit en kan veilig als startpunt worden gebruikt.</p>
+    <main class="trainer" aria-label="Mood Trainer sessie">
+      <section class="screen upper" aria-label="Coachingspaneel">
+        <header class="coach-header">
+          <p class="coach-kicker">Dagelijkse training</p>
+          <h1>Mood Trainer</h1>
+          <p class="coach-intro">
+            Richt je op de camera, adem rustig in en laat de digitale coach je stemming lezen. Deze oefening helpt je bewust te worden van je mimiek en dagelijkse gemoed.
+          </p>
+        </header>
+        <div class="status-panel" role="status" aria-live="polite">
+          <p class="panel-label">Sessiestatus</p>
+          <p id="statusMessage">Druk op <strong>Start sessie</strong> om te beginnen.</p>
+        </div>
+        <div class="mood-panel" aria-live="polite">
+          <p class="panel-label">Waargenomen stemming</p>
+          <p id="moodLabel" class="mood-label">–</p>
+          <p id="confidenceLabel" class="confidence-label"></p>
+        </div>
+        <button id="toggleSession" type="button" class="primary">Start sessie</button>
+      </section>
+      <section class="screen lower" aria-label="Camera en analyse">
+        <div class="video-frame">
+          <video id="videoFeed" autoplay muted playsinline aria-label="Live camerabeeld"></video>
+          <canvas id="overlay" aria-hidden="true"></canvas>
+          <p class="video-hint">Zorg voor voldoende licht en kijk ontspannen naar het scherm.</p>
+        </div>
+      </section>
     </main>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js" integrity="sha384-M5m2nzf7rmv2krt55rIJUjVUiZuq6gpy6ADAmIyEFd+ELl1mXc3Yw9+k82kUNSvg" crossorigin="anonymous"></script>
+    <script>
+      const startButton = document.getElementById('toggleSession');
+      const statusMessage = document.getElementById('statusMessage');
+      const moodLabel = document.getElementById('moodLabel');
+      const confidenceLabel = document.getElementById('confidenceLabel');
+      const video = document.getElementById('videoFeed');
+      const overlay = document.getElementById('overlay');
+      const overlayCtx = overlay.getContext('2d');
+
+      const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+      const TRANSLATIONS = {
+        neutral: 'Neutraal',
+        happy: 'Vrolijk',
+        sad: 'Verdrietig',
+        angry: 'Boos',
+        fearful: 'Bang',
+        disgusted: 'Afkeer',
+        surprised: 'Verbaasd'
+      };
+
+      let modelsLoaded = false;
+      let detecting = false;
+      let stream = null;
+
+      function setStatus(message) {
+        statusMessage.innerHTML = message;
+      }
+
+      function setMood(name, confidence) {
+        if (!name) {
+          moodLabel.textContent = 'Geen gezicht gedetecteerd';
+          confidenceLabel.textContent = '';
+          return;
+        }
+        const translated = TRANSLATIONS[name] || name;
+        moodLabel.textContent = translated;
+        confidenceLabel.textContent = `Vertrouwen: ${Math.round(confidence * 100)}%`;
+      }
+
+      async function ensureModels() {
+        if (modelsLoaded) {
+          return;
+        }
+        setStatus('Modellen laden…');
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+        ]);
+        modelsLoaded = true;
+      }
+
+      function resizeOverlay() {
+        const { videoWidth, videoHeight } = video;
+        if (videoWidth === 0 || videoHeight === 0) {
+          return;
+        }
+        overlay.width = videoWidth;
+        overlay.height = videoHeight;
+        overlay.style.width = `${videoWidth}px`;
+        overlay.style.height = `${videoHeight}px`;
+      }
+
+      async function analyseFrame() {
+        if (!detecting) {
+          return;
+        }
+
+        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+        const detections = await faceapi
+          .detectAllFaces(video, options)
+          .withFaceExpressions();
+
+        overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+
+        if (!detecting) {
+          return;
+        }
+
+        if (detections.length === 0) {
+          setMood(null);
+        } else {
+          const dims = faceapi.matchDimensions(overlay, video, true);
+          const resized = faceapi.resizeResults(detections, dims);
+          resized.forEach((det) => {
+            const { x, y, width, height } = det.detection.box;
+            overlayCtx.strokeStyle = 'rgba(62, 102, 148, 0.9)';
+            overlayCtx.lineWidth = 3;
+            overlayCtx.strokeRect(x, y, width, height);
+          });
+
+          const first = detections[0];
+          const expressions = first.expressions;
+          const [bestExpression, confidence] = Object.entries(expressions).reduce(
+            (acc, entry) => (entry[1] > acc[1] ? entry : acc),
+            ['neutral', 0]
+          );
+          setMood(bestExpression, confidence);
+        }
+
+        requestAnimationFrame(analyseFrame);
+      }
+
+      function stopSession(message) {
+        detecting = false;
+        startButton.disabled = false;
+        startButton.textContent = 'Start sessie';
+        window.removeEventListener('resize', resizeOverlay);
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+          stream = null;
+        }
+        if (video.srcObject) {
+          video.srcObject = null;
+        }
+        overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+        setMood(null);
+        if (message) {
+          setStatus(message);
+        } else {
+          setStatus('Sessie gestopt. Druk op <strong>Start sessie</strong> voor een nieuwe poging.');
+        }
+      }
+
+      async function startSession() {
+        try {
+          startButton.disabled = true;
+          setStatus('Voorbereiden…');
+          await ensureModels();
+          setStatus('Camera starten…');
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+          video.srcObject = stream;
+          await video.play();
+          resizeOverlay();
+          window.addEventListener('resize', resizeOverlay);
+          detecting = true;
+          startButton.textContent = 'Stop sessie';
+          startButton.disabled = false;
+          setStatus('Analyseren. Ontspan je gezicht en kijk naar de camera.');
+          requestAnimationFrame(analyseFrame);
+        } catch (error) {
+          console.error(error);
+          stopSession('Het lukt niet om de camera of modellen te laden. Controleer je rechten en probeer opnieuw.');
+        }
+      }
+
+      startButton.addEventListener('click', () => {
+        if (detecting) {
+          stopSession();
+        } else {
+          startSession();
+        }
+      });
+
+      video.addEventListener('loadedmetadata', resizeOverlay);
+    </script>
   </body>
 </html>
