@@ -1,3 +1,5 @@
 # Takenlijst
 
-Er zijn momenteel geen openstaande taken. De site is bewust leeg en statisch gehouden.
+- [x] Mood Trainer prototype met gezichtsherkenning opgezet.
+- [ ] Resultatenlogica koppelen aan toekomstige dagoverzicht-module.
+- [ ] Coach-avatar en aanvullende feedbackschermen uitwerken.
