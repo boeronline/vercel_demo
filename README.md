@@ -1,23 +1,37 @@
-# Lege statische site
+# Web Development with Codex
 
-Dit project is teruggebracht tot een eenvoudige, volledig statische webpagina. Er is geen JavaScript
-meer aanwezig en er zijn geen dynamische componenten of afhankelijkheden nodig om de pagina te
-laten werken.
+This repository now hosts a single-page, mobile-first marketing site introducing the "Web Development with Codex" offering.
+The experience focuses on fluid typography, soft gradients, and accessible content blocks that adapt gracefully from small to
+large screens.
 
-## Inhoud
+## Pages
 
-- `index.html` – Minimale HTML-structuur met een korte boodschap.
-- `styles.css` – Basisopmaak zodat de tekst gecentreerd en leesbaar blijft.
-- `api/hello.js` – Optioneel voorbeeld van een serverless functie die standaard door Vercel wordt
-  ondersteund, maar niet gebruikt wordt door de pagina.
-- `vercel.json` – Eenvoudige Vercel-configuratie voor het hosten van de statische assets.
+- `index.html` – Landing page with hero messaging, service highlights, testimonial, and contact form.
+- `styles.css` – Custom design system with gradients, card layouts, and responsive breakpoints tailored for handheld devices.
+- `api/hello.js` – Example Vercel serverless function (unused by the static site but retained for parity with Vercel defaults).
+- `vercel.json` – Minimal configuration file for deploying static assets on Vercel.
 
-## Lokale weergave
+## Local development
 
-Open `index.html` rechtstreeks in je browser of serveer de map met een statische webserver naar
-keuze. Verdere buildstappen zijn niet nodig.
+No build tooling is required. Open `index.html` directly in your browser or serve the folder using any static file server.
 
-## Deployen
+To preview with the included Node development server:
 
-Upload de bestanden naar een statische hostingdienst (zoals Vercel, Netlify of GitHub Pages). Omdat
-het om puur statische bestanden gaat, volstaat het om de map te publiceren.
+```bash
+npm install
+npm run dev
+```
+
+The server listens on port 3000 and reloads whenever files change.
+
+## Design goals
+
+- **Mobile-first** – Typography, spacing, and component structure start with small screens to ensure thumb-friendly navigation.
+- **Inclusive** – Semantic HTML, accessible form controls, and legible color contrast are prioritized throughout.
+- **Expressive** – Gradients, glassmorphism cards, and refined type pairings evoke a crafted studio brand that spotlights Codex.
+- **Guided** – A responsive navigation system adapts from a compact hamburger menu to a wide-screen tab row so visitors can jump directly to each section.
+
+## Deployment
+
+Deploy the repository to any static hosting provider (such as Vercel, Netlify, or GitHub Pages). All assets are static; no
+additional configuration is required beyond serving the files.

@@ -1,5 +1,6 @@
-# Takenlijst
+# Task list
 
-- [x] Mood Trainer prototype met gezichtsherkenning opgezet.
-- [ ] Resultatenlogica koppelen aan toekomstige dagoverzicht-module.
-- [ ] Coach-avatar en aanvullende feedbackschermen uitwerken.
+- [x] Launch Codex mobile web landing page.
+- [x] Ship responsive navigation with hamburger toggle.
+- [ ] Add portfolio case studies with imagery.
+- [ ] Integrate form submission endpoint for inquiries.

@@ -1,195 +1,241 @@
 <!doctype html>
-<html lang="nl">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Mood Trainer – gezichtsherkenning</title>
+    <title>Web Development with Codex</title>
+    <meta
+      name="description"
+      content="Discover how Codex crafts polished, mobile-first web experiences with modern design, inclusive content, and performance at heart."
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="trainer" aria-label="Mood Trainer sessie">
-      <section class="screen upper" aria-label="Coachingspaneel">
-        <header class="coach-header">
-          <p class="coach-kicker">Dagelijkse training</p>
-          <h1>Mood Trainer</h1>
-          <p class="coach-intro">
-            Richt je op de camera, adem rustig in en laat de digitale coach je stemming lezen. Deze oefening helpt je bewust te worden van je mimiek en dagelijkse gemoed.
+    <div class="page-shell">
+      <header class="site-header" aria-label="Site introduction">
+        <div class="header-top">
+          <div class="brand">
+            <span class="logo" aria-hidden="true">⌘</span>
+            <span class="brand-wordmark">Codex Studio</span>
+          </div>
+          <button
+            class="nav-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="primary-navigation"
+          >
+            <span class="sr-only">Toggle navigation</span>
+            <span class="nav-toggle-icon" aria-hidden="true"></span>
+          </button>
+          <nav class="site-nav" aria-label="Primary">
+            <ul id="primary-navigation" class="nav-links">
+              <li><a href="#services">Services</a></li>
+              <li><a href="#highlights">Highlights</a></li>
+              <li><a href="#testimonial">Story</a></li>
+              <li><a href="#contact">Contact</a></li>
+            </ul>
+          </nav>
+        </div>
+        <div class="intro">
+          <p class="eyebrow">Codex Studio</p>
+          <h1>Web Development for the imaginative web.</h1>
+          <p class="lede">
+            We build responsive, content-rich experiences that celebrate craft, accessibility, and performance.
+            Explore how Codex partners with teams to turn ideas into living, breathing web products.
           </p>
-        </header>
-        <div class="status-panel" role="status" aria-live="polite">
-          <p class="panel-label">Sessiestatus</p>
-          <p id="statusMessage">Druk op <strong>Start sessie</strong> om te beginnen.</p>
+          <div class="cta-group">
+            <a class="btn primary" href="#contact">Start a project</a>
+            <a class="btn ghost" href="#services">See services</a>
+          </div>
         </div>
-        <div class="mood-panel" aria-live="polite">
-          <p class="panel-label">Waargenomen stemming</p>
-          <p id="moodLabel" class="mood-label">–</p>
-          <p id="confidenceLabel" class="confidence-label"></p>
-        </div>
-        <button id="toggleSession" type="button" class="primary">Start sessie</button>
-      </section>
-      <section class="screen lower" aria-label="Camera en analyse">
-        <div class="video-frame">
-          <video id="videoFeed" autoplay muted playsinline aria-label="Live camerabeeld"></video>
-          <canvas id="overlay" aria-hidden="true"></canvas>
-          <p class="video-hint">Zorg voor voldoende licht en kijk ontspannen naar het scherm.</p>
-        </div>
-      </section>
-    </main>
-    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js" integrity="sha384-M5m2nzf7rmv2krt55rIJUjVUiZuq6gpy6ADAmIyEFd+ELl1mXc3Yw9+k82kUNSvg" crossorigin="anonymous"></script>
+      </header>
+
+      <main>
+        <section id="services" class="section services" aria-labelledby="services-heading">
+          <div class="section-heading">
+            <p class="section-eyebrow">What we craft</p>
+            <h2 id="services-heading">Tailored web development, powered by Codex.</h2>
+            <p>
+              From prototypes to production-ready launches, we shape every layer of your web presence with a mobile-first mindset
+              and a devotion to clarity.
+            </p>
+          </div>
+          <div class="card-grid">
+            <article class="card" aria-label="Design systems">
+              <h3>Design systems</h3>
+              <p>
+                Component libraries, fluid typography, and beautiful motion that keeps your brand consistent across every pixel.
+              </p>
+            </article>
+            <article class="card" aria-label="Content-driven sites">
+              <h3>Content-driven sites</h3>
+              <p>
+                Editorial experiences optimized for reading on the go, with progressive enhancement and inclusive interactions.
+              </p>
+            </article>
+            <article class="card" aria-label="Product foundations">
+              <h3>Product foundations</h3>
+              <p>
+                Accessible forms, dashboards, and integrations that help you ship fast without sacrificing stability or delight.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section
+          id="highlights"
+          class="section highlights"
+          aria-labelledby="highlights-heading"
+        >
+          <div class="section-heading">
+            <p class="section-eyebrow">Codex in action</p>
+            <h2 id="highlights-heading">The blueprint we bring to every build.</h2>
+          </div>
+          <ul class="highlight-list">
+            <li>
+              <h3>Mobile before all</h3>
+              <p>
+                We prototype in the smallest viewport first to guarantee fast loading, thumb-friendly navigation, and effortless
+                content discovery.
+              </p>
+            </li>
+            <li>
+              <h3>Inclusive by default</h3>
+              <p>
+                Semantic HTML, contrast-perfect palettes, and mindful copy ensure every visitor is welcomed and supported.
+              </p>
+            </li>
+            <li>
+              <h3>Powered by Codex</h3>
+              <p>
+                Leveraging the Codex platform means rapid iteration, smart automation, and a partner that understands creative
+                teams.
+              </p>
+            </li>
+            <li>
+              <h3>Performance obsessed</h3>
+              <p>
+                We audit Lighthouse scores, trim dependencies, and keep interactions silky smooth even on low-end devices.
+              </p>
+            </li>
+          </ul>
+        </section>
+
+        <section
+          id="testimonial"
+          class="section testimonial"
+          aria-label="Client testimonial"
+        >
+          <div class="quote-block">
+            <p class="quote">“Codex translated our concepts into a mobile experience that feels handcrafted and effortless.”</p>
+            <p class="attribution">— Lina Mora, Product Lead at Northwind Collective</p>
+          </div>
+        </section>
+
+        <section class="section contact" id="contact" aria-labelledby="contact-heading">
+          <div class="section-heading">
+            <p class="section-eyebrow">Start something</p>
+            <h2 id="contact-heading">Let’s build your next web chapter together.</h2>
+            <p>Share your idea, and the Codex team will shape a roadmap tailored to your goals.</p>
+          </div>
+          <form class="contact-form" aria-label="Contact Codex">
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text" autocomplete="name" placeholder="Your name" />
+
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" />
+
+            <label for="project">Project vision</label>
+            <textarea id="project" name="project" rows="4" placeholder="Tell us about the experience you imagine"></textarea>
+
+            <button type="submit" class="btn primary">Send message</button>
+          </form>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <p>© <span id="year"></span> Codex Studio. Crafted with empathy for the web.</p>
+      </footer>
+    </div>
+
     <script>
-      const startButton = document.getElementById('toggleSession');
-      const statusMessage = document.getElementById('statusMessage');
-      const moodLabel = document.getElementById('moodLabel');
-      const confidenceLabel = document.getElementById('confidenceLabel');
-      const video = document.getElementById('videoFeed');
-      const overlay = document.getElementById('overlay');
-      const overlayCtx = overlay.getContext('2d');
+      const yearEl = document.getElementById('year');
+      const now = new Date();
+      yearEl.textContent = now.getFullYear();
 
-      const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
-      const TRANSLATIONS = {
-        neutral: 'Neutraal',
-        happy: 'Vrolijk',
-        sad: 'Verdrietig',
-        angry: 'Boos',
-        fearful: 'Bang',
-        disgusted: 'Afkeer',
-        surprised: 'Verbaasd'
-      };
+      const navToggle = document.querySelector('.nav-toggle');
+      const nav = document.querySelector('.site-nav');
 
-      let modelsLoaded = false;
-      let detecting = false;
-      let stream = null;
+      if (navToggle && nav) {
+        const navLinks = nav.querySelectorAll('a');
+        const mq = window.matchMedia('(min-width: 720px)');
 
-      function setStatus(message) {
-        statusMessage.innerHTML = message;
-      }
+        const syncNavAria = () => {
+          if (navToggle.offsetParent !== null) {
+            const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+            nav.setAttribute('aria-hidden', expanded ? 'false' : 'true');
+          } else {
+            nav.setAttribute('aria-hidden', 'false');
+          }
+        };
 
-      function setMood(name, confidence) {
-        if (!name) {
-          moodLabel.textContent = 'Geen gezicht gedetecteerd';
-          confidenceLabel.textContent = '';
-          return;
-        }
-        const translated = TRANSLATIONS[name] || name;
-        moodLabel.textContent = translated;
-        confidenceLabel.textContent = `Vertrouwen: ${Math.round(confidence * 100)}%`;
-      }
+        const closeNav = () => {
+          nav.classList.remove('is-open');
+          document.body.classList.remove('nav-open');
+          navToggle.setAttribute('aria-expanded', 'false');
+          syncNavAria();
+        };
 
-      async function ensureModels() {
-        if (modelsLoaded) {
-          return;
-        }
-        setStatus('Modellen laden…');
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-          faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
-        ]);
-        modelsLoaded = true;
-      }
+        const handleMediaChange = (event) => {
+          if (event.matches) {
+            closeNav();
+          }
+          syncNavAria();
+        };
 
-      function resizeOverlay() {
-        const { videoWidth, videoHeight } = video;
-        if (videoWidth === 0 || videoHeight === 0) {
-          return;
-        }
-        overlay.width = videoWidth;
-        overlay.height = videoHeight;
-        overlay.style.width = `${videoWidth}px`;
-        overlay.style.height = `${videoHeight}px`;
-      }
+        navToggle.addEventListener('click', () => {
+          const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+          navToggle.setAttribute('aria-expanded', String(!expanded));
+          nav.classList.toggle('is-open');
+          document.body.classList.toggle('nav-open');
+          syncNavAria();
+        });
 
-      async function analyseFrame() {
-        if (!detecting) {
-          return;
-        }
-
-        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
-        const detections = await faceapi
-          .detectAllFaces(video, options)
-          .withFaceExpressions();
-
-        overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
-
-        if (!detecting) {
-          return;
-        }
-
-        if (detections.length === 0) {
-          setMood(null);
-        } else {
-          const dims = faceapi.matchDimensions(overlay, video, true);
-          const resized = faceapi.resizeResults(detections, dims);
-          resized.forEach((det) => {
-            const { x, y, width, height } = det.detection.box;
-            overlayCtx.strokeStyle = 'rgba(62, 102, 148, 0.9)';
-            overlayCtx.lineWidth = 3;
-            overlayCtx.strokeRect(x, y, width, height);
+        navLinks.forEach((link) => {
+          link.addEventListener('click', () => {
+            if (navToggle.offsetParent !== null) {
+              closeNav();
+            }
           });
+        });
 
-          const first = detections[0];
-          const expressions = first.expressions;
-          const [bestExpression, confidence] = Object.entries(expressions).reduce(
-            (acc, entry) => (entry[1] > acc[1] ? entry : acc),
-            ['neutral', 0]
-          );
-          setMood(bestExpression, confidence);
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape' && document.body.classList.contains('nav-open')) {
+            closeNav();
+          }
+        });
+
+        if (typeof mq.addEventListener === 'function') {
+          mq.addEventListener('change', handleMediaChange);
+        } else if (typeof mq.addListener === 'function') {
+          mq.addListener(handleMediaChange);
         }
 
-        requestAnimationFrame(analyseFrame);
+        syncNavAria();
       }
-
-      function stopSession(message) {
-        detecting = false;
-        startButton.disabled = false;
-        startButton.textContent = 'Start sessie';
-        window.removeEventListener('resize', resizeOverlay);
-        if (stream) {
-          stream.getTracks().forEach((track) => track.stop());
-          stream = null;
-        }
-        if (video.srcObject) {
-          video.srcObject = null;
-        }
-        overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
-        setMood(null);
-        if (message) {
-          setStatus(message);
-        } else {
-          setStatus('Sessie gestopt. Druk op <strong>Start sessie</strong> voor een nieuwe poging.');
-        }
-      }
-
-      async function startSession() {
-        try {
-          startButton.disabled = true;
-          setStatus('Voorbereiden…');
-          await ensureModels();
-          setStatus('Camera starten…');
-          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-          video.srcObject = stream;
-          await video.play();
-          resizeOverlay();
-          window.addEventListener('resize', resizeOverlay);
-          detecting = true;
-          startButton.textContent = 'Stop sessie';
-          startButton.disabled = false;
-          setStatus('Analyseren. Ontspan je gezicht en kijk naar de camera.');
-          requestAnimationFrame(analyseFrame);
-        } catch (error) {
-          console.error(error);
-          stopSession('Het lukt niet om de camera of modellen te laden. Controleer je rechten en probeer opnieuw.');
-        }
-      }
-
-      startButton.addEventListener('click', () => {
-        if (detecting) {
-          stopSession();
-        } else {
-          startSession();
-        }
-      });
-
-      video.addEventListener('loadedmetadata', resizeOverlay);
     </script>
   </body>
 </html>
