@@ -31,22 +31,13 @@
             <span class="logo" aria-hidden="true">⌘</span>
             <span class="brand-wordmark">Codex Studio</span>
           </div>
-          <button
-            class="nav-toggle"
-            type="button"
-            aria-expanded="false"
-            aria-controls="primary-navigation"
-          >
-            <span class="sr-only">Toggle navigation</span>
-            <span class="nav-toggle-icon" aria-hidden="true"></span>
-          </button>
-          <nav class="site-nav" aria-label="Primary">
-            <ul id="primary-navigation" class="nav-links">
-              <li><a href="#services">Services</a></li>
-              <li><a href="#highlights">Highlights</a></li>
-              <li><a href="#testimonial">Story</a></li>
-              <li><a href="#contact">Contact</a></li>
-            </ul>
+          <nav class="swipe-nav" aria-label="Primary">
+            <div class="nav-track" id="primary-navigation">
+              <a class="nav-pill" href="#services">Services</a>
+              <a class="nav-pill" href="#highlights">Highlights</a>
+              <a class="nav-pill" href="#testimonial">Story</a>
+              <a class="nav-pill" href="#contact">Contact</a>
+            </div>
           </nav>
         </div>
         <div class="intro">
@@ -176,65 +167,146 @@
       const now = new Date();
       yearEl.textContent = now.getFullYear();
 
-      const navToggle = document.querySelector('.nav-toggle');
-      const nav = document.querySelector('.site-nav');
+      const navTrack = document.querySelector('.nav-track');
+      const navLinks = Array.from(document.querySelectorAll('.nav-pill'));
+      const observedSections = Array.from(
+        document.querySelectorAll('main .section')
+      );
 
-      if (navToggle && nav) {
-        const navLinks = nav.querySelectorAll('a');
-        const mq = window.matchMedia('(min-width: 720px)');
-
-        const syncNavAria = () => {
-          if (navToggle.offsetParent !== null) {
-            const expanded = navToggle.getAttribute('aria-expanded') === 'true';
-            nav.setAttribute('aria-hidden', expanded ? 'false' : 'true');
-          } else {
-            nav.setAttribute('aria-hidden', 'false');
-          }
-        };
-
-        const closeNav = () => {
-          nav.classList.remove('is-open');
-          document.body.classList.remove('nav-open');
-          navToggle.setAttribute('aria-expanded', 'false');
-          syncNavAria();
-        };
-
-        const handleMediaChange = (event) => {
-          if (event.matches) {
-            closeNav();
-          }
-          syncNavAria();
-        };
-
-        navToggle.addEventListener('click', () => {
-          const expanded = navToggle.getAttribute('aria-expanded') === 'true';
-          navToggle.setAttribute('aria-expanded', String(!expanded));
-          nav.classList.toggle('is-open');
-          document.body.classList.toggle('nav-open');
-          syncNavAria();
-        });
+      if (navTrack && navLinks.length > 0) {
+        navTrack.setAttribute('role', 'list');
+        navTrack.setAttribute('tabindex', '0');
+        navTrack.setAttribute('aria-orientation', 'horizontal');
 
         navLinks.forEach((link) => {
-          link.addEventListener('click', () => {
-            if (navToggle.offsetParent !== null) {
-              closeNav();
+          link.setAttribute('role', 'listitem');
+          link.addEventListener('click', (event) => {
+            event.preventDefault();
+            const targetId = link.getAttribute('href');
+            const target = document.querySelector(targetId);
+
+            if (target) {
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              setActiveLink(targetId.substring(1));
             }
           });
         });
 
-        document.addEventListener('keydown', (event) => {
-          if (event.key === 'Escape' && document.body.classList.contains('nav-open')) {
-            closeNav();
+        const pointerState = {
+          isPointerDown: false,
+          startX: 0,
+          scrollLeft: 0,
+          pointerId: null,
+        };
+
+        const releasePointer = () => {
+          if (pointerState.pointerId !== null) {
+            navTrack.releasePointerCapture(pointerState.pointerId);
           }
+          pointerState.isPointerDown = false;
+          pointerState.pointerId = null;
+        };
+
+        navTrack.addEventListener('pointerdown', (event) => {
+          pointerState.isPointerDown = true;
+          pointerState.startX = event.clientX;
+          pointerState.scrollLeft = navTrack.scrollLeft;
+          pointerState.pointerId = event.pointerId;
+          navTrack.classList.add('is-grabbing');
+          navTrack.setPointerCapture(event.pointerId);
         });
 
-        if (typeof mq.addEventListener === 'function') {
-          mq.addEventListener('change', handleMediaChange);
-        } else if (typeof mq.addListener === 'function') {
-          mq.addListener(handleMediaChange);
-        }
+        navTrack.addEventListener('pointermove', (event) => {
+          if (!pointerState.isPointerDown) {
+            return;
+          }
 
-        syncNavAria();
+          const deltaX = event.clientX - pointerState.startX;
+          navTrack.scrollLeft = pointerState.scrollLeft - deltaX;
+        });
+
+        navTrack.addEventListener('pointerup', () => {
+          navTrack.classList.remove('is-grabbing');
+          releasePointer();
+        });
+
+        navTrack.addEventListener('pointercancel', () => {
+          navTrack.classList.remove('is-grabbing');
+          releasePointer();
+        });
+
+        navTrack.addEventListener('keydown', (event) => {
+          const isHorizontal = event.key === 'ArrowRight' || event.key === 'ArrowLeft';
+
+          if (!isHorizontal) {
+            return;
+          }
+
+          const direction = event.key === 'ArrowRight' ? 1 : -1;
+          const focusable = navLinks;
+          const currentIndex = focusable.indexOf(document.activeElement);
+          const nextIndex = Math.min(
+            focusable.length - 1,
+            Math.max(0, currentIndex + direction)
+          );
+
+          if (focusable[nextIndex]) {
+            focusable[nextIndex].focus();
+            const targetId = focusable[nextIndex].getAttribute('href').substring(1);
+            setActiveLink(targetId);
+          }
+
+          navTrack.scrollBy({
+            left: direction * navTrack.clientWidth * 0.6,
+            behavior: 'smooth',
+          });
+        });
+
+        const setActiveLink = (sectionId) => {
+          navLinks.forEach((link) => {
+            const isActive = link.getAttribute('href') === `#${sectionId}`;
+            link.classList.toggle('is-active', isActive);
+
+            if (isActive) {
+              link.setAttribute('aria-current', 'true');
+
+              requestAnimationFrame(() => {
+                const linkRect = link.getBoundingClientRect();
+                const trackRect = navTrack.getBoundingClientRect();
+                const offset =
+                  linkRect.left -
+                  trackRect.left -
+                  (trackRect.width - linkRect.width) / 2;
+                navTrack.scrollBy({ left: offset, behavior: 'smooth' });
+              });
+            } else {
+              link.removeAttribute('aria-current');
+            }
+          });
+        };
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            const visible = entries
+              .filter((entry) => entry.isIntersecting)
+              .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+            if (visible[0]) {
+              setActiveLink(visible[0].target.id);
+            }
+          },
+          {
+            root: null,
+            threshold: [0.3, 0.6, 0.9],
+            rootMargin: '-40% 0px -50% 0px',
+          }
+        );
+
+        observedSections.forEach((section) => observer.observe(section));
+
+        if (observedSections[0]) {
+          setActiveLink(observedSections[0].id);
+        }
       }
     </script>
   </body>
