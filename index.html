@@ -18,7 +18,7 @@
       crossorigin
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -39,6 +39,9 @@
               <a class="nav-pill" href="#contact">Contact</a>
             </div>
           </nav>
+          <p class="mobile-pager-hint" aria-hidden="true">
+            Use the menu to jump between sections—no endless scrolling required.
+          </p>
         </div>
         <div class="intro">
           <p class="eyebrow">Codex Studio</p>
@@ -169,11 +172,10 @@
 
       const navTrack = document.querySelector('.nav-track');
       const navLinks = Array.from(document.querySelectorAll('.nav-pill'));
-      const observedSections = Array.from(
-        document.querySelectorAll('main .section')
-      );
+      const mainEl = document.querySelector('main');
+      const sections = Array.from(document.querySelectorAll('main .section'));
 
-      if (navTrack && navLinks.length > 0) {
+      if (navTrack && navLinks.length > 0 && sections.length > 0) {
         navTrack.setAttribute('role', 'list');
         navTrack.setAttribute('tabindex', '0');
         navTrack.setAttribute('aria-orientation', 'horizontal');
@@ -185,9 +187,18 @@
             const targetId = link.getAttribute('href');
             const target = document.querySelector(targetId);
 
-            if (target) {
+            if (!target) {
+              return;
+            }
+
+            const sectionSlug = targetId.substring(1);
+
+            if (isPagedMode) {
+              activateSection(sectionSlug);
+              setActiveLink(sectionSlug, { syncSection: false });
+            } else {
               target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              setActiveLink(targetId.substring(1));
+              setActiveLink(sectionSlug);
             }
           });
         });
@@ -253,7 +264,12 @@
           if (focusable[nextIndex]) {
             focusable[nextIndex].focus();
             const targetId = focusable[nextIndex].getAttribute('href').substring(1);
-            setActiveLink(targetId);
+            if (isPagedMode) {
+              activateSection(targetId);
+              setActiveLink(targetId, { syncSection: false });
+            } else {
+              setActiveLink(targetId);
+            }
           }
 
           navTrack.scrollBy({
@@ -262,7 +278,47 @@
           });
         });
 
-        const setActiveLink = (sectionId) => {
+        let isPagedMode = false;
+        let activeSectionId = sections[0].id;
+
+        const activateSection = (sectionId, { scrollToTop = true } = {}) => {
+          if (!sections.some((section) => section.id === sectionId)) {
+            return;
+          }
+
+          activeSectionId = sectionId;
+          sections.forEach((section) => {
+            const isTarget = section.id === sectionId;
+            section.classList.toggle('is-active', isTarget);
+
+            if (isPagedMode) {
+              section.toggleAttribute('hidden', !isTarget);
+              section.setAttribute('aria-hidden', isTarget ? 'false' : 'true');
+
+              if (!isTarget) {
+                section.setAttribute('inert', '');
+              } else {
+                section.removeAttribute('inert');
+              }
+            } else {
+              section.removeAttribute('hidden');
+              section.removeAttribute('aria-hidden');
+              section.removeAttribute('inert');
+            }
+          });
+
+          if (isPagedMode && scrollToTop) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        };
+
+        const setActiveLink = (sectionId, { syncSection = true } = {}) => {
+          if (!sections.some((section) => section.id === sectionId)) {
+            return;
+          }
+
+          activeSectionId = sectionId;
+
           navLinks.forEach((link) => {
             const isActive = link.getAttribute('href') === `#${sectionId}`;
             link.classList.toggle('is-active', isActive);
@@ -283,10 +339,18 @@
               link.removeAttribute('aria-current');
             }
           });
+
+          if (isPagedMode && syncSection) {
+            activateSection(sectionId, { scrollToTop: false });
+          }
         };
 
         const observer = new IntersectionObserver(
           (entries) => {
+            if (isPagedMode) {
+              return;
+            }
+
             const visible = entries
               .filter((entry) => entry.isIntersecting)
               .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
@@ -302,10 +366,61 @@
           }
         );
 
-        observedSections.forEach((section) => observer.observe(section));
+        sections.forEach((section) => observer.observe(section));
 
-        if (observedSections[0]) {
-          setActiveLink(observedSections[0].id);
+        if (sections[0]) {
+          setActiveLink(sections[0].id);
+        }
+
+        const enablePagedMode = () => {
+          if (isPagedMode || !mainEl) {
+            return;
+          }
+
+          isPagedMode = true;
+          mainEl.setAttribute('data-paged', 'true');
+          observer.disconnect();
+
+          activateSection(activeSectionId, { scrollToTop: false });
+          setActiveLink(activeSectionId, { syncSection: false });
+          window.scrollTo({ top: 0 });
+        };
+
+        const disablePagedMode = () => {
+          if (!isPagedMode || !mainEl) {
+            return;
+          }
+
+          isPagedMode = false;
+          mainEl.removeAttribute('data-paged');
+
+          sections.forEach((section) => {
+            section.classList.remove('is-active');
+            section.removeAttribute('hidden');
+            section.removeAttribute('aria-hidden');
+            section.removeAttribute('inert');
+            observer.observe(section);
+          });
+
+          setActiveLink(activeSectionId);
+        };
+
+        const pagerMedia = window.matchMedia('(max-width: 720px)');
+
+        const handleMediaChange = (event) => {
+          if (event.matches) {
+            enablePagedMode();
+          } else {
+            disablePagedMode();
+          }
+        };
+
+        handleMediaChange(pagerMedia);
+
+        if (typeof pagerMedia.addEventListener === 'function') {
+          pagerMedia.addEventListener('change', handleMediaChange);
+        } else if (typeof pagerMedia.addListener === 'function') {
+          pagerMedia.addListener(handleMediaChange);
         }
       }
     </script>
