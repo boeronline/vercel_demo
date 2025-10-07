@@ -3,461 +3,114 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Wiz Cloud Security Platform</title>
+    <title>Launch Flow Console</title>
     <meta
       name="description"
-      content="Experience how Wiz unifies cloud security with full visibility, prioritized risk, and agentless coverage across AWS, Azure, Google Cloud, and Kubernetes."
+      content="See how GitHub, Codex, Slack, and Vercel snap together into a no-scroll production flow."
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      rel="preconnect"
-      href="https://fonts.googleapis.com"
-    />
-    <link
-      rel="preconnect"
-      href="https://fonts.gstatic.com"
-      crossorigin
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="page-shell">
-      <header class="site-header" aria-label="Site introduction">
-        <div class="header-top">
-          <div class="brand">
-            <span class="logo" aria-hidden="true">W</span>
-            <span class="brand-wordmark">Wiz</span>
+    <div class="ds-shell" role="application" aria-label="Launch Flow overview">
+      <section class="screen top-screen" aria-labelledby="overview-heading">
+        <header class="top-header">
+          <div class="brand-mark" aria-hidden="true">LC</div>
+          <div class="brand-copy">
+            <p class="eyebrow">Launch Code Lab</p>
+            <h1 id="overview-heading">Zero-scroll mission control for the build pipeline.</h1>
           </div>
-          <nav class="swipe-nav" aria-label="Primary">
-            <div class="nav-track" id="primary-navigation">
-              <a class="nav-pill" href="#platform">Platform</a>
-              <a class="nav-pill" href="#coverage">Coverage</a>
-              <a class="nav-pill" href="#outcomes">Outcomes</a>
-              <a class="nav-pill" href="#customers">Customers</a>
-              <a class="nav-pill" href="#demo">Demo</a>
-            </div>
-          </nav>
-          <p class="mobile-pager-hint" aria-hidden="true">
-            Use the menu to jump between sections—no endless scrolling required.
-          </p>
+        </header>
+        <p class="lede">
+          Everything on this page mirrors how the demo ships: GitHub commits trigger Codex automations, updates surface in Slack,
+          Node tools package the experience, and Vercel deploys the result in seconds.
+        </p>
+        <dl class="system-highlights">
+          <div>
+            <dt>Source of truth</dt>
+            <dd>GitHub repo orchestrating issues, PRs, and release tags.</dd>
+          </div>
+          <div>
+            <dt>Co-pilot</dt>
+            <dd>Codex agents sculpt the UI, update content, and keep the flow human-friendly.</dd>
+          </div>
+          <div>
+            <dt>Signal relay</dt>
+            <dd>Slack notifications announce every merge, request reviews, and log deployment health.</dd>
+          </div>
+          <div>
+            <dt>Runtime</dt>
+            <dd>Node-based tooling bundles the static site and feeds previews into Vercel.</dd>
+          </div>
+        </dl>
+        <p class="cta-text">This console is built so you can read the entire story at a glance—no scrolling, just clarity.</p>
+      </section>
+
+      <section class="screen bottom-screen" aria-labelledby="pipeline-heading">
+        <div class="bottom-header">
+          <h2 id="pipeline-heading">How the automation loop locks into place</h2>
+          <p>Follow the glowing signal as it travels through each service in the chain.</p>
         </div>
-        <div class="intro">
-          <p class="eyebrow">Unified cloud security</p>
-          <h1>Secure every cloud stack with Wiz clarity.</h1>
-          <p class="lede">
-            Wiz gives security and DevOps teams a single, agentless platform to surface the risks that matter most,
-            see context across every layer, and drive remediation at cloud speed.
-          </p>
-          <div class="cta-group">
-            <a class="btn primary" href="#demo">Book a demo</a>
-            <a class="btn ghost" href="#platform">Explore the platform</a>
-          </div>
-        </div>
-      </header>
-
-      <main>
-        <section id="platform" class="section platform" aria-labelledby="platform-heading">
-          <div class="section-heading">
-            <p class="section-eyebrow">Platform pillars</p>
-            <h2 id="platform-heading">A unified security graph for every layer of cloud.</h2>
-            <p>
-              Wiz continuously maps identities, configurations, vulnerabilities, and runtime data into a single graph—so teams
-              can see what’s exposed, prioritize the blast radius, and resolve issues before they become incidents.
-            </p>
-          </div>
-          <div class="card-grid">
-            <article class="card" aria-label="Full-stack visibility">
-              <h3>Full-stack visibility</h3>
-              <p>
-                Connect cloud accounts in minutes and inventory resources, workloads, data, and identities without agents.
-              </p>
-            </article>
-            <article class="card" aria-label="Risk-based prioritization">
-              <h3>Risk-based prioritization</h3>
-              <p>
-                Correlate vulnerabilities, misconfigurations, network exposure, and permissions to spotlight the riskiest attack paths.
-              </p>
-            </article>
-            <article class="card" aria-label="Proactive remediation">
-              <h3>Proactive remediation</h3>
-              <p>
-                Send contextual fixes straight into Jira, ServiceNow, and Slack so engineering can resolve issues fast.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        <section
-          id="coverage"
-          class="section coverage"
-          aria-labelledby="coverage-heading"
-        >
-          <div class="section-heading">
-            <p class="section-eyebrow">Cloud coverage</p>
-            <h2 id="coverage-heading">Instant context across clouds, containers, and data.</h2>
-          </div>
-          <ul class="coverage-list">
-            <li>
-              <h3>Public cloud</h3>
-              <p>AWS, Azure, GCP, OCI, and Alibaba Cloud connected through native APIs with continuous posture checks.</p>
-            </li>
-            <li>
-              <h3>Containers &amp; Kubernetes</h3>
-              <p>Full insight into clusters, namespaces, and workloads—including images, registries, and runtime behavior.</p>
-            </li>
-            <li>
-              <h3>Identity &amp; access</h3>
-              <p>Analyze IAM graph relationships to surface toxic combinations, dormant admins, and privilege escalation paths.</p>
-            </li>
-            <li>
-              <h3>Data &amp; secrets</h3>
-              <p>Detect exposed data stores, misconfigured buckets, and secrets hidden in images or repos before attackers do.</p>
-            </li>
-          </ul>
-        </section>
-
-        <section
-          id="outcomes"
-          class="section outcomes"
-          aria-labelledby="outcomes-heading"
-        >
-          <div class="section-heading">
-            <p class="section-eyebrow">Security outcomes</p>
-            <h2 id="outcomes-heading">Prove impact in weeks—not quarters.</h2>
-            <p>Teams that switch to Wiz accelerate remediation, eliminate blind spots, and align security with the business.</p>
-          </div>
-          <div class="metrics-grid">
-            <article class="metric" aria-label="Faster risk reduction">
-              <h3>2.4× faster</h3>
-              <p>Average time to remediate critical issues after consolidating tools into Wiz.</p>
-            </article>
-            <article class="metric" aria-label="Coverage">
-              <h3>100% coverage</h3>
-              <p>Visibility across workloads, identities, and data without deploying a single agent.</p>
-            </article>
-            <article class="metric" aria-label="Consolidated tools">
-              <h3>40% fewer tools</h3>
-              <p>Organizations replace point solutions with Wiz’s unified cloud-native application protection platform.</p>
-            </article>
-          </div>
-        </section>
-
-        <section
-          id="customers"
-          class="section customers"
-          aria-labelledby="customers-heading"
-        >
-          <div class="section-heading">
-            <p class="section-eyebrow">Trusted teams</p>
-            <h2 id="customers-heading">Global leaders rely on Wiz to secure what matters.</h2>
-          </div>
-          <div class="quote-block">
-            <p class="quote">“Wiz gave us a single source of truth for cloud risk—within days we eliminated blind spots and aligned security with engineering.”</p>
-            <p class="attribution">— Priya Shah, VP Security Engineering, Aurora Fintech</p>
-          </div>
-          <ul class="logo-row" aria-label="Customer logos">
-            <li>Salesforce</li>
-            <li>DocuSign</li>
-            <li>BMW</li>
-            <li>Rivian</li>
-            <li>Fox</li>
-          </ul>
-        </section>
-
-        <section class="section contact" id="demo" aria-labelledby="demo-heading">
-          <div class="section-heading">
-            <p class="section-eyebrow">See Wiz in action</p>
-            <h2 id="demo-heading">Book a personalized walkthrough.</h2>
-            <p>Tell us about your environment and we’ll tailor a demo to show how Wiz can unify your cloud security program.</p>
-          </div>
-          <form class="contact-form" aria-label="Request a demo from Wiz">
-            <label for="name">Name</label>
-            <input id="name" name="name" type="text" autocomplete="name" placeholder="Your name" />
-
-            <label for="email">Work email</label>
-            <input id="email" name="email" type="email" autocomplete="email" placeholder="you@company.com" />
-
-            <label for="company">Company</label>
-            <input id="company" name="company" type="text" autocomplete="organization" placeholder="Organization" />
-
-            <label for="cloud">Cloud footprint</label>
-            <textarea
-              id="cloud"
-              name="cloud"
-              rows="4"
-              placeholder="Share the clouds, container platforms, or priorities you’d like to explore"
-            ></textarea>
-
-            <button type="submit" class="btn primary">Request demo</button>
-          </form>
-        </section>
-      </main>
-
-      <footer class="site-footer">
-        <p>© <span id="year"></span> Wiz. Secure every cloud together.</p>
-      </footer>
+        <ol class="pipeline-track">
+          <li class="pipeline-step" data-step="GitHub">
+            <span class="step-icon" aria-hidden="true">①</span>
+            <h3>Versioned commits</h3>
+            <p>Branches capture experiments. Merged pull requests tag releases that feed the pipeline.</p>
+          </li>
+          <li class="pipeline-step" data-step="Codex">
+            <span class="step-icon" aria-hidden="true">②</span>
+            <h3>Codex build agent</h3>
+            <p>Requested in Slack, the agent edits files, runs tests, and lands atomic commits automatically.</p>
+          </li>
+          <li class="pipeline-step" data-step="Slack">
+            <span class="step-icon" aria-hidden="true">③</span>
+            <h3>Slack mission log</h3>
+            <p>Channels capture diffs, deployment previews, and approvals without leaving the conversation.</p>
+          </li>
+          <li class="pipeline-step" data-step="Node">
+            <span class="step-icon" aria-hidden="true">④</span>
+            <h3>Node preview tooling</h3>
+            <p>Local scripts lint, bundle, and render the DS-inspired interface for verification.</p>
+          </li>
+          <li class="pipeline-step" data-step="Vercel">
+            <span class="step-icon" aria-hidden="true">⑤</span>
+            <h3>Vercel release</h3>
+            <p>Production builds roll out globally; status pings bubble back into Slack the moment they finish.</p>
+          </li>
+        </ol>
+        <footer class="pipeline-footer">
+          <p>Loop complete: feedback from users lands back in GitHub issues, ready for the next cycle.</p>
+        </footer>
+      </section>
     </div>
 
     <script>
-      const yearEl = document.getElementById('year');
-      const now = new Date();
-      yearEl.textContent = now.getFullYear();
+      const steps = Array.from(document.querySelectorAll('.pipeline-step'));
+      const shell = document.querySelector('.ds-shell');
+      let activeIndex = 0;
 
-      const navTrack = document.querySelector('.nav-track');
-      const navLinks = Array.from(document.querySelectorAll('.nav-pill'));
-      const mainEl = document.querySelector('main');
-      const sections = Array.from(document.querySelectorAll('main .section'));
-
-      if (navTrack && navLinks.length > 0 && sections.length > 0) {
-        navTrack.setAttribute('role', 'list');
-        navTrack.setAttribute('tabindex', '0');
-        navTrack.setAttribute('aria-orientation', 'horizontal');
-
-        navLinks.forEach((link) => {
-          link.setAttribute('role', 'listitem');
-          link.addEventListener('click', (event) => {
-            event.preventDefault();
-            const targetId = link.getAttribute('href');
-            const target = document.querySelector(targetId);
-
-            if (!target) {
-              return;
-            }
-
-            const sectionSlug = targetId.substring(1);
-
-            if (isPagedMode) {
-              activateSection(sectionSlug);
-              setActiveLink(sectionSlug, { syncSection: false });
-            } else {
-              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              setActiveLink(sectionSlug);
-            }
-          });
+      const updateSteps = () => {
+        steps.forEach((step, index) => {
+          const isActive = index === activeIndex;
+          step.classList.toggle('is-active', isActive);
         });
 
-        const pointerState = {
-          isPointerDown: false,
-          startX: 0,
-          scrollLeft: 0,
-          pointerId: null,
-        };
-
-        const releasePointer = () => {
-          if (pointerState.pointerId !== null) {
-            navTrack.releasePointerCapture(pointerState.pointerId);
-          }
-          pointerState.isPointerDown = false;
-          pointerState.pointerId = null;
-        };
-
-        navTrack.addEventListener('pointerdown', (event) => {
-          pointerState.isPointerDown = true;
-          pointerState.startX = event.clientX;
-          pointerState.scrollLeft = navTrack.scrollLeft;
-          pointerState.pointerId = event.pointerId;
-          navTrack.classList.add('is-grabbing');
-          navTrack.setPointerCapture(event.pointerId);
-        });
-
-        navTrack.addEventListener('pointermove', (event) => {
-          if (!pointerState.isPointerDown) {
-            return;
-          }
-
-          const deltaX = event.clientX - pointerState.startX;
-          navTrack.scrollLeft = pointerState.scrollLeft - deltaX;
-        });
-
-        navTrack.addEventListener('pointerup', () => {
-          navTrack.classList.remove('is-grabbing');
-          releasePointer();
-        });
-
-        navTrack.addEventListener('pointercancel', () => {
-          navTrack.classList.remove('is-grabbing');
-          releasePointer();
-        });
-
-        navTrack.addEventListener('keydown', (event) => {
-          const isHorizontal = event.key === 'ArrowRight' || event.key === 'ArrowLeft';
-
-          if (!isHorizontal) {
-            return;
-          }
-
-          const direction = event.key === 'ArrowRight' ? 1 : -1;
-          const focusable = navLinks;
-          const currentIndex = focusable.indexOf(document.activeElement);
-          const nextIndex = Math.min(
-            focusable.length - 1,
-            Math.max(0, currentIndex + direction)
-          );
-
-          if (focusable[nextIndex]) {
-            focusable[nextIndex].focus();
-            const targetId = focusable[nextIndex].getAttribute('href').substring(1);
-            if (isPagedMode) {
-              activateSection(targetId);
-              setActiveLink(targetId, { syncSection: false });
-            } else {
-              setActiveLink(targetId);
-            }
-          }
-
-          navTrack.scrollBy({
-            left: direction * navTrack.clientWidth * 0.6,
-            behavior: 'smooth',
-          });
-        });
-
-        let isPagedMode = false;
-        let activeSectionId = sections[0].id;
-
-        const activateSection = (sectionId, { scrollToTop = true } = {}) => {
-          if (!sections.some((section) => section.id === sectionId)) {
-            return;
-          }
-
-          activeSectionId = sectionId;
-          sections.forEach((section) => {
-            const isTarget = section.id === sectionId;
-            section.classList.toggle('is-active', isTarget);
-
-            if (isPagedMode) {
-              section.toggleAttribute('hidden', !isTarget);
-              section.setAttribute('aria-hidden', isTarget ? 'false' : 'true');
-
-              if (!isTarget) {
-                section.setAttribute('inert', '');
-              } else {
-                section.removeAttribute('inert');
-              }
-            } else {
-              section.removeAttribute('hidden');
-              section.removeAttribute('aria-hidden');
-              section.removeAttribute('inert');
-            }
-          });
-
-          if (isPagedMode && scrollToTop) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }
-        };
-
-        const setActiveLink = (sectionId, { syncSection = true } = {}) => {
-          if (!sections.some((section) => section.id === sectionId)) {
-            return;
-          }
-
-          activeSectionId = sectionId;
-
-          navLinks.forEach((link) => {
-            const isActive = link.getAttribute('href') === `#${sectionId}`;
-            link.classList.toggle('is-active', isActive);
-
-            if (isActive) {
-              link.setAttribute('aria-current', 'true');
-
-              requestAnimationFrame(() => {
-                const linkRect = link.getBoundingClientRect();
-                const trackRect = navTrack.getBoundingClientRect();
-                const offset =
-                  linkRect.left -
-                  trackRect.left -
-                  (trackRect.width - linkRect.width) / 2;
-                navTrack.scrollBy({ left: offset, behavior: 'smooth' });
-              });
-            } else {
-              link.removeAttribute('aria-current');
-            }
-          });
-
-          if (isPagedMode && syncSection) {
-            activateSection(sectionId, { scrollToTop: false });
-          }
-        };
-
-        const observer = new IntersectionObserver(
-          (entries) => {
-            if (isPagedMode) {
-              return;
-            }
-
-            const visible = entries
-              .filter((entry) => entry.isIntersecting)
-              .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-
-            if (visible[0]) {
-              setActiveLink(visible[0].target.id);
-            }
-          },
-          {
-            root: null,
-            threshold: [0.3, 0.6, 0.9],
-            rootMargin: '-40% 0px -50% 0px',
-          }
-        );
-
-        sections.forEach((section) => observer.observe(section));
-
-        if (sections[0]) {
-          setActiveLink(sections[0].id);
+        const activeStep = steps[activeIndex];
+        if (activeStep) {
+          shell?.style.setProperty('--active-label', `'${activeStep.dataset.step ?? ''}'`);
         }
 
-        const enablePagedMode = () => {
-          if (isPagedMode || !mainEl) {
-            return;
-          }
+        activeIndex = (activeIndex + 1) % steps.length;
+      };
 
-          isPagedMode = true;
-          mainEl.setAttribute('data-paged', 'true');
-          observer.disconnect();
-
-          activateSection(activeSectionId, { scrollToTop: false });
-          setActiveLink(activeSectionId, { syncSection: false });
-          window.scrollTo({ top: 0 });
-        };
-
-        const disablePagedMode = () => {
-          if (!isPagedMode || !mainEl) {
-            return;
-          }
-
-          isPagedMode = false;
-          mainEl.removeAttribute('data-paged');
-
-          sections.forEach((section) => {
-            section.classList.remove('is-active');
-            section.removeAttribute('hidden');
-            section.removeAttribute('aria-hidden');
-            section.removeAttribute('inert');
-            observer.observe(section);
-          });
-
-          setActiveLink(activeSectionId);
-        };
-
-        const pagerMedia = window.matchMedia('(max-width: 720px)');
-
-        const handleMediaChange = (event) => {
-          if (event.matches) {
-            enablePagedMode();
-          } else {
-            disablePagedMode();
-          }
-        };
-
-        handleMediaChange(pagerMedia);
-
-        if (typeof pagerMedia.addEventListener === 'function') {
-          pagerMedia.addEventListener('change', handleMediaChange);
-        } else if (typeof pagerMedia.addListener === 'function') {
-          pagerMedia.addListener(handleMediaChange);
-        }
+      if (steps.length > 0) {
+        updateSteps();
+        setInterval(updateSteps, 3600);
       }
     </script>
   </body>
