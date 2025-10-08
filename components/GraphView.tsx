@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useRef } from 'react';
-import cytoscape, { ElementDefinition } from 'cytoscape';
+import type cytoscapeType from 'cytoscape';
+import type { ElementDefinition, LayoutOptions } from 'cytoscape';
 import { DetailSelection, LifegraphData, LifegraphFilters } from '@/types/data';
 import { entityPassesFilters } from '@/lib/filters';
 
-const layoutOptions: cytoscape.LayoutOptions = {
+const layoutOptions: LayoutOptions = {
   name: 'cose',
   fit: true,
   padding: 40,
@@ -21,16 +22,26 @@ type GraphViewProps = {
 
 export const GraphView = ({ data, filters, refreshToken, onSelect }: GraphViewProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const cyRef = useRef<cytoscape.Core | null>(null);
+  const cyRef = useRef<cytoscapeType.Core | null>(null);
 
   const elements = useMemo(() => buildElements(data, filters), [data, filters]);
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const cy = cytoscape({
-      container: containerRef.current,
-      elements,
-      style: [
+
+    let isUnmounted = false;
+    let cy: cytoscapeType.Core | null = null;
+
+    const init = async () => {
+      const cytoscape = (await import('cytoscape')).default;
+      if (!containerRef.current || isUnmounted) {
+        return;
+      }
+
+      cy = cytoscape({
+        container: containerRef.current,
+        elements,
+        style: [
         {
           selector: 'node',
           style: {
@@ -82,34 +93,38 @@ export const GraphView = ({ data, filters, refreshToken, onSelect }: GraphViewPr
           }
         }
       ],
-      layout: layoutOptions
-    });
+        layout: layoutOptions
+      });
 
-    cy.on('tap', 'node', (event) => {
-      const node = event.target;
-      onSelect({ kind: 'node', data: node.data('payload') });
-      cy.elements().removeClass('highlighted');
-      node.addClass('highlighted');
-    });
+      cy.on('tap', 'node', (event) => {
+        const node = event.target;
+        onSelect({ kind: 'node', data: node.data('payload') });
+        cy?.elements().removeClass('highlighted');
+        node.addClass('highlighted');
+      });
 
-    cy.on('tap', 'edge', (event) => {
-      const edge = event.target;
-      onSelect({ kind: 'edge', data: edge.data('payload') });
-      cy.elements().removeClass('highlighted');
-      edge.addClass('highlighted');
-    });
+      cy.on('tap', 'edge', (event) => {
+        const edge = event.target;
+        onSelect({ kind: 'edge', data: edge.data('payload') });
+        cy?.elements().removeClass('highlighted');
+        edge.addClass('highlighted');
+      });
 
-    cy.on('tap', (event) => {
-      if (event.target === cy) {
-        onSelect(null);
-        cy.elements().removeClass('highlighted');
-      }
-    });
+      cy.on('tap', (event) => {
+        if (event.target === cy) {
+          onSelect(null);
+          cy?.elements().removeClass('highlighted');
+        }
+      });
 
-    cyRef.current = cy;
+      cyRef.current = cy;
+    };
+
+    void init();
 
     return () => {
-      cy.destroy();
+      isUnmounted = true;
+      cy?.destroy();
       cyRef.current = null;
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
