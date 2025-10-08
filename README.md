@@ -1,37 +1,52 @@
-# Web Development with Codex
+# LifeGraph Lite
 
-This repository now hosts a single-page, mobile-first marketing site introducing the "Web Development with Codex" offering.
-The experience focuses on fluid typography, soft gradients, and accessible content blocks that adapt gracefully from small to
-large screens.
+LifeGraph Lite is a client-only Next.js application that lets you ingest four CSV datasets (people, events, deals, workouts) and explore the relationships between them. Data is persisted exclusively in `localStorage` under the key `lifegraph-lite-v1`.
 
-## Pages
+## Stack
 
-- `index.html` – Landing page with hero messaging, service highlights, testimonial, and contact form.
-- `styles.css` – Custom design system with gradients, card layouts, and responsive breakpoints tailored for handheld devices.
-- `api/hello.js` – Example Vercel serverless function (unused by the static site but retained for parity with Vercel defaults).
-- `vercel.json` – Minimal configuration file for deploying static assets on Vercel.
+- Next.js (App Router) + TypeScript
+- Tailwind CSS
+- Zustand for state management (with `localStorage` persistence)
+- Papa Parse for CSV ingestion
+- Cytoscape.js for graph visualisation
+- Chart.js via `react-chartjs-2` for lightweight insights
+- ESLint + Prettier
 
-## Local development
-
-No build tooling is required. Open `index.html` directly in your browser or serve the folder using any static file server.
-
-To preview with the included Node development server:
+## Getting started
 
 ```bash
-npm install
-npm run dev
+pnpm install # or npm install / yarn install
+pnpm dev
 ```
 
-The server listens on port 3000 and reloads whenever files change.
+Open http://localhost:3000 to view the cockpit. All graph rendering runs in the browser (no API routes or server actions).
 
-## Design goals
+## Features
 
-- **Mobile-first** – Typography, spacing, and component structure start with small screens to ensure thumb-friendly navigation.
-- **Inclusive** – Semantic HTML, accessible form controls, and legible color contrast are prioritized throughout.
-- **Expressive** – Gradients, glassmorphism cards, and refined type pairings evoke a crafted studio brand that spotlights Codex.
-- **Guided** – A responsive navigation system adapts from a compact hamburger menu to a wide-screen tab row so visitors can jump directly to each section.
+- Upload CSVs for people, events, deals and workouts (headers required, order flexible).
+- Load curated sample data to quickly explore the UX.
+- Filter by context (Work, Family, Health/Sport, School) and refresh the graph layout on demand.
+- Explore relationships in Cytoscape with clickable nodes/edges feeding a detail panel.
+- Export the current dataset to JSON or wipe it locally.
+- Generate 14-day insights for meetings, deal value and running volume.
 
-## Deployment
+## CSV format
 
-Deploy the repository to any static hosting provider (such as Vercel, Netlify, or GitHub Pages). All assets are static; no
-additional configuration is required beyond serving the files.
+| File          | Columns                                                                  |
+| ------------- | ------------------------------------------------------------------------- |
+| `people.csv`  | `name, role, org, tags`                                                   |
+| `events.csv`  | `type, start, end, title, person, rel, deal, next_step, has_artifact`     |
+| `deals.csv`   | `name, owner, stage, value`                                               |
+| `workouts.csv`| `person, date, sport, distance_km, pace_min_per_km, hr_avg`               |
+
+Columns are case-insensitive; values are trimmed automatically. Boolean columns support values such as `true`, `1`, `yes`, `ja`.
+
+## Local development notes
+
+- The UI is client-rendered. Avoid server components for data-driven views.
+- When testing CSV parsing, ensure headers are present; Papa Parse is configured with `header: true`.
+- `pnpm lint` (or the npm equivalent) runs Next.js ESLint checks.
+
+## License
+
+Refer to the repository’s `LICENSE` file.
