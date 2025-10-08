@@ -3,7 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname === '/' || pathname.startsWith('/_next') || pathname.startsWith('/icon') || pathname === '/favicon.ico') {
+  if (
+    pathname === '/' ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/icon') ||
+    pathname === '/favicon.ico' ||
+    pathname.startsWith('/api')
+  ) {
     return NextResponse.next();
   }
 
@@ -13,5 +19,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next|.*\\..*).*)']
+  matcher: ['/((?!_next|api|.*\\..*).*)']
 };
