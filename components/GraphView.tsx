@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useRef } from 'react';
-import cytoscape, { ElementDefinition } from 'cytoscape';
+import type cytoscapeType from 'cytoscape';
+import type { ElementDefinition, LayoutOptions } from 'cytoscape';
 import { DetailSelection, LifegraphData, LifegraphFilters } from '@/types/data';
 import { entityPassesFilters } from '@/lib/filters';
 
-const layoutOptions: cytoscape.LayoutOptions = {
+const layoutOptions: LayoutOptions = {
   name: 'cose',
   fit: true,
   padding: 40,
@@ -21,95 +22,108 @@ type GraphViewProps = {
 
 export const GraphView = ({ data, filters, refreshToken, onSelect }: GraphViewProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const cyRef = useRef<cytoscape.Core | null>(null);
+  const cyRef = useRef<cytoscapeType.Core | null>(null);
 
   const elements = useMemo(() => buildElements(data, filters), [data, filters]);
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const cy = cytoscape({
-      container: containerRef.current,
-      elements,
-      style: [
-        {
-          selector: 'node',
-          style: {
-            'background-color': '#38bdf8',
-            label: 'data(label)',
-            color: '#e2e8f0',
-            'font-size': '10px',
-            'text-wrap': 'wrap',
-            'text-valign': 'center',
-            'text-halign': 'center'
-          }
-        },
-        {
-          selector: 'node[type = "deal"]',
-          style: {
-            'background-color': '#f97316'
-          }
-        },
-        {
-          selector: 'node[type = "event"]',
-          style: {
-            'background-color': '#22c55e'
-          }
-        },
-        {
-          selector: 'node[type = "workout"]',
-          style: {
-            'background-color': '#a855f7'
-          }
-        },
-        {
-          selector: 'edge',
-          style: {
-            width: 2,
-            'line-color': '#64748b',
-            'target-arrow-color': '#64748b',
-            'target-arrow-shape': 'triangle',
-            label: 'data(label)',
-            color: '#94a3b8',
-            'font-size': '9px'
-          }
-        },
-        {
-          selector: '.highlighted',
-          style: {
-            'background-color': '#fbbf24',
-            'line-color': '#fbbf24',
-            'target-arrow-color': '#fbbf24'
-          }
-        }
-      ],
-      layout: layoutOptions
-    });
+    let isUnmounted = false;
+    let cy: cytoscapeType.Core | null = null;
 
-    cy.on('tap', 'node', (event) => {
-      const node = event.target;
-      onSelect({ kind: 'node', data: node.data('payload') });
-      cy.elements().removeClass('highlighted');
-      node.addClass('highlighted');
-    });
-
-    cy.on('tap', 'edge', (event) => {
-      const edge = event.target;
-      onSelect({ kind: 'edge', data: edge.data('payload') });
-      cy.elements().removeClass('highlighted');
-      edge.addClass('highlighted');
-    });
-
-    cy.on('tap', (event) => {
-      if (event.target === cy) {
-        onSelect(null);
-        cy.elements().removeClass('highlighted');
+    const init = async () => {
+      const cytoscape = (await import('cytoscape')).default;
+      if (!containerRef.current || isUnmounted) {
+        return;
       }
-    });
 
-    cyRef.current = cy;
+      cy = cytoscape({
+        container: containerRef.current,
+        elements,
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'background-color': '#38bdf8',
+              label: 'data(label)',
+              color: '#e2e8f0',
+              'font-size': '10px',
+              'text-wrap': 'wrap',
+              'text-valign': 'center',
+              'text-halign': 'center'
+            }
+          },
+          {
+            selector: 'node[type = "deal"]',
+            style: {
+              'background-color': '#f97316'
+            }
+          },
+          {
+            selector: 'node[type = "event"]',
+            style: {
+              'background-color': '#22c55e'
+            }
+          },
+          {
+            selector: 'node[type = "workout"]',
+            style: {
+              'background-color': '#a855f7'
+            }
+          },
+          {
+            selector: 'edge',
+            style: {
+              width: 2,
+              'line-color': '#64748b',
+              'target-arrow-color': '#64748b',
+              'target-arrow-shape': 'triangle',
+              label: 'data(label)',
+              color: '#94a3b8',
+              'font-size': '9px'
+            }
+          },
+          {
+            selector: '.highlighted',
+            style: {
+              'background-color': '#fbbf24',
+              'line-color': '#fbbf24',
+              'target-arrow-color': '#fbbf24'
+            }
+          }
+        ],
+        layout: layoutOptions
+      });
+
+      cy.on('tap', 'node', (event) => {
+        const node = event.target;
+        onSelect({ kind: 'node', data: node.data('payload') });
+        cy?.elements().removeClass('highlighted');
+        node.addClass('highlighted');
+      });
+
+      cy.on('tap', 'edge', (event) => {
+        const edge = event.target;
+        onSelect({ kind: 'edge', data: edge.data('payload') });
+        cy?.elements().removeClass('highlighted');
+        edge.addClass('highlighted');
+      });
+
+      cy.on('tap', (event) => {
+        if (event.target === cy) {
+          onSelect(null);
+          cy?.elements().removeClass('highlighted');
+        }
+      });
+
+      cyRef.current = cy;
+    };
+
+    void init();
 
     return () => {
-      cy.destroy();
+      isUnmounted = true;
+      cy?.destroy();
       cyRef.current = null;
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
