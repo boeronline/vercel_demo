@@ -1,17 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { nextUrl, method } = request;
+  const { pathname } = nextUrl;
 
-  if (pathname === '/' || pathname.startsWith('/_next') || pathname.startsWith('/icon') || pathname === '/favicon.ico') {
+  const isAssetRequest = /\.[^/]+$/.test(pathname);
+  const isIconRequest = pathname === '/favicon.ico' || pathname.startsWith('/icon');
+  const isNextInternal = pathname.startsWith('/_next');
+
+  if (method !== 'GET' || pathname === '/' || isAssetRequest || isIconRequest || isNextInternal) {
     return NextResponse.next();
   }
 
-  const url = request.nextUrl.clone();
-  url.pathname = '/';
-  return NextResponse.rewrite(url);
+  const acceptHeader = request.headers.get('accept') ?? '';
+  if (!acceptHeader.includes('text/html')) {
+    return NextResponse.next();
+  }
+
+  const rewriteUrl = new URL('/', request.url);
+  return NextResponse.rewrite(rewriteUrl);
 }
 
 export const config = {
-  matcher: ['/((?!_next|.*\\..*).*)']
+  matcher: ['/:path*']
 };
