@@ -129,11 +129,11 @@ export const parseCsvFile = async (
           })();
 
           resolve({ type, rows: payload });
-        } catch (error) {
+        } catch (error: unknown) {
           reject(error);
         }
       },
-      error: (error) => reject(error)
+      error: (error: unknown) => reject(error)
     });
   });
 };
