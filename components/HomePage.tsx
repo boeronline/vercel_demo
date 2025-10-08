@@ -3,10 +3,16 @@
 import { ActionSection } from '@/components/ActionSection';
 import { DetailsPanel } from '@/components/DetailsPanel';
 import { FiltersSection } from '@/components/FiltersSection';
-import { GraphView } from '@/components/GraphView';
 import { InsightsPanel } from '@/components/InsightsPanel';
 import { UploadSection } from '@/components/UploadSection';
 import { useLifegraphStore } from '@/store/useLifegraphStore';
+import dynamic from 'next/dynamic';
+import type { GraphViewProps } from '@/components/GraphView';
+
+const GraphView = dynamic<GraphViewProps>(
+  () => import('@/components/GraphView').then((mod) => mod.GraphView),
+  { ssr: false }
+);
 
 export const HomePage = () => {
   const data = useLifegraphStore((state) => state.data);

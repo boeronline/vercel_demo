@@ -13,7 +13,7 @@ const layoutOptions: LayoutOptions = {
   animate: false
 };
 
-type GraphViewProps = {
+export type GraphViewProps = {
   data: LifegraphData;
   filters: LifegraphFilters;
   refreshToken: number;
